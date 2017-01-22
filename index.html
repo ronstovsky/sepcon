@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta id="viewport" name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1">
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 0.8em;
+        }
+        #app {
+            margin: 1.5em;
+            color: #333;
+        }
+        .sepcon { position: relative; }
+        .sepcon:after {
+            display: block;
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            font-size: 0.5em;
+            padding: 0.2em 0.5em;
+        }
+        .sepcon-container:after { content: 'container' }
+        .sepcon-component:after { content: 'component' }
+        .sepcon-element:after { content: 'element' }
+
+        .sepcon-container {
+            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.1);
+            padding: 2em;
+            margin: 1em;
+            border: solid 1px rgba(0, 0, 0, 0.1);
+        }
+        .sepcon-component {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+            padding: 2em;
+            background-color: #fafafa;
+        }
+        .sepcon-element {
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+            padding: 2em;
+            margin: 0.5em;
+            background-color: #eee;
+        }
+        .button {
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            padding: 0.5em 1em;
+            margin-right: 2em;
+            color: #666;
+            background-color: #fafafa;
+            transition: background-color 0.5s;
+        }
+        .button:hover {
+            background-color: #eee;
+        }
+        .clickable {
+            cursor: pointer;
+            background-color: #fafafa;
+            transition: background-color 0.5s, color 0.5s;
+        }
+        .clickable:hover {
+            background-color: #eee;
+        }
+
+        .is-active,
+        .is-active.raised {
+            background-color: #ddd;
+            color: #222;
+        }
+        .is-active.raised.clickable:hover {
+            background-color: #ccc;
+            color: #000;
+        }
+
+        .raised {
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+            background-color:#fff;
+        }
+        .raised.clickable:hover {
+            background-color:#eee;
+            color: #000;
+        }
+
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .redText { color: #cf0000; }
+        .blueText { color: #2f6fad; }
+        .underline { display: inline-block; border-bottom: dotted 1px #888; }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script src="example.js"></script>
+</body>
+</html>
