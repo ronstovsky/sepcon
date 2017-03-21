@@ -1,9 +1,3 @@
-###### *Probably not the last JS framework you'll live to see.*
-<br />
-<br />
-<br />
-<br />
-<br />
 <a name="data"></a>
 ## Data
 The [**Data**][data] object is a static object that every [**Component**][component] of SepCon can gain access to.  
