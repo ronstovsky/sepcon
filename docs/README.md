@@ -1,13 +1,11 @@
 # Index
 
-## Ingredients
+## Classes
 * [Data][data]
 * [Modifier][modifier]
-* [Component][component]
-* [Component State][component-state]
-* [Component Tag][component-tag]
+* [Component][component], [Component State][component-state], [Component Tag][component-tag]
 
-## Sugar Coatings
+## Features
 * [Lifecycles][lifecycle]
 * [Router][router]
 <br />
