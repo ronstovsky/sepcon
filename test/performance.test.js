@@ -17,91 +17,103 @@ describe('Component Performance', ()=>{
     })();
 
     const scope = SepCon.createScope();
-    scope.createData('globals', {
-        number: 0,
-        propToChange: null
+    scope.createData({
+        id: 'globals',
+        data: {
+            number: 0,
+            propToChange: null
+        }
     });
-    scope.createModifier('globals', {
-        methods: {
-            updateNumber() {
-                this.setProps('globals', {
-                    number: Math.round(Math.random()*1000)
-                });
+    scope.createModifier({
+        id: 'globals',
+        modifier: {
+            methods: {
+                updateNumber() {
+                    this.setProps('globals', {
+                        number: Math.round(Math.random() * 1000)
+                    });
+                }
             }
         }
     });
-    const row = scope.createComponent('row', {
-        state: {
-            props: {
-                local: {
-                    number: 0,
-                    text: ''
-                },
-                global: {
-                    num: {
-                        data: 'globals',
-                        key: 'number'
+    const row = scope.createComponent({
+        id: 'row',
+        component: {
+            state: {
+                props: {
+                    local: {
+                        number: 0,
+                        text: ''
+                    },
+                    global: {
+                        num: {
+                            data: 'globals',
+                            key: 'number'
+                        }
                     }
+                },
+                methods: {
+                    external: {
+                        firstRenderCb() {},
+                        changeCb() {}
+                    }
+                },
+                mount() {
+                    this.setProps({
+                        number: Math.round(Math.random() * 1000),
+                        text: parseInt(Date.now() * 1000 + Math.round(Math.random() * 1000)).toString(36)
+                    }, true);
+                },
+                'post:mount'() {
+                    this.methods.external.firstRenderCb();
+                },
+                change() {
+                    this.methods.external.changeCb();
                 }
             },
-            methods: {
-                external: {
-                    firstRenderCb() {},
-                    changeCb() {}
-                }
-            },
-            mount() {
-                this.setProps({
-                    number: Math.round(Math.random()*1000),
-                    text: parseInt(Date.now()*1000+Math.round(Math.random()*1000)).toString(36)
-                }, true);
-            },
-            'post:mount'() {
-                this.methods.external.firstRenderCb();
-            },
-            change() {
-                this.methods.external.changeCb();
+            render() {
+                return `${this.props.text} ${this.props.number} ${this.props.num}<br />`;
             }
-        },
-        render() {
-            return `${this.props.text} ${this.props.number} ${this.props.num}<br />`;
         }
     });
 
-    const rows = scope.createComponent('rows', {
-        state: {
-            props: {
-                global: {
-                    propToChange: {
-                        data: 'globals',
-                        key: 'propToChange'
+    const rows = scope.createComponent({
+        id: 'rows',
+        component: {
+            state: {
+                props: {
+                    global: {
+                        propToChange: {
+                            data: 'globals',
+                            key: 'propToChange'
+                        }
                     }
+                },
+                methods: {
+                    external: {
+                        createDone() {}
+                    }
+                },
+                change() {
+                    return false;
                 }
             },
-            methods: {
-                external: {
-                    createDone() {}
+            render() {
+                const max = 1000;
+                let rows = [];
+                for (let i = 0; i < max; i++) {
+                    const current = row.createTag();
+                    current.id(i);
+                    if (i === max - 1) {
+                        current
+                            .refMethods({
+                                firstRenderCb: 'createDone'
+                            });
+                    }
+                    rows.push(current.render());
                 }
-            },
-            change() {
-                return false;
+                return rows.join('');
             }
-        },
-        render() {
-            const max = 1000;
-            let rows = [];
-            for(let i=0; i<max; i++) {
-                const current = row.createTag();
-                current.id(i);
-                if(i === max-1) {
-                    current
-                        .refMethods({
-                            firstRenderCb: 'createDone'
-                        });
-                }
-                rows.push(current.render());
-            }
-            return rows.join('');
         }
     });
 

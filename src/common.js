@@ -84,6 +84,13 @@ export default {
         return res;
     },
 
+    concatMethods(meth1, meth2) {
+        return function() {
+            meth1.apply(this, arguments);
+            return meth2.apply(this, arguments);
+        };
+    },
+
     /**
      * creates method names for lifecycles ("hook":"action" or "action" if not pre/post)
      * @param hook

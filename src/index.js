@@ -2,6 +2,25 @@ import Root from './root';
 import { DATA_CHANGES_AFFECTING } from './constants';
 import common from './common';
 
+function create(def, type, defs, cls) {
+    let definition = common.clone(def);
+
+    if(defs[definition.id]) {
+        console.error(`The ${type} id "${definition.id}" already exists`);
+        return false;
+    }
+    else {
+        if(definition.extend) {
+            definition.extend = defs[definition.extend].definition;
+        }
+        if(definition.decorators) {
+            definition.decorators = definition.decorators.map(dec => common.clone(defs[dec].definition));
+        }
+        defs[definition.id] = new cls(definition, this.root);
+    }
+    return defs[definition.id];
+}
+
 class SepConClass {
     constructor(options) {
         if(options) {
@@ -13,74 +32,16 @@ class SepConClass {
 
         this.modify = this.root.executeModifier.bind(this.root);
     }
-    createData(id, extend, data) {
-        if(typeof id === 'object') {
-            const def = id;
-            id = def.id;
-            data = def.data;
-            extend = def.extend;
-        }
-        else if(typeof extend === 'object') {
-            data = extend;
-            extend = null;
-        }
-        if(this.root.datas[id]) {
-            console.error(`The data id "${id}" already exists`);
-        }
-        else {
-            if(typeof extend === 'string') {
-                extend = this.root.datas[extend].definition;
-            }
-            this.root.datas[id] = new this.root.classes.Data(data, extend, this.root);
-            return this.root.datas[id];
-        }
-        return false;
+    createData(def) {
+        return create.call(this, def, 'data', this.root.datas, this.root.classes.Data);
     }
-    createModifier(id, extend, modifier) {
-        if(typeof id === 'object') {
-            const def = id;
-            id = def.id;
-            modifier = def.modifier;
-            extend = def.extend;
-        }
-        else if(typeof extend === 'object') {
-            modifier = extend;
-            extend = null;
-        }
-        if(this.root.modifiers[id]) {
-            console.error(`The modifier id "${id}" already exists`);
-        }
-        else {
-            if(typeof extend === 'string') {
-                extend = this.root.modifiers[extend].definition;
-            }
-            this.root.modifiers[id] = new this.root.classes.Modifier(modifier, extend, this.root);
-            return this.root.modifiers[id];
-        }
-        return false;
+    createModifier(def) {
+        return create.call(this, def, 'modifier', this.root.modifiers, this.root.classes.Modifier);
     }
-    createComponent(id, extend, component) {
-        if(typeof id === 'object') {
-            const def = id;
-            component = def.component;
-            id = def.id;
-            extend = def.extend;
-        }
-        else if(typeof extend === 'object') {
-            component = extend;
-            extend = null;
-        }
-        if(this.root.components[id]) {
-            console.error(`The component id "${id}" already exists`);
-        }
-        else {
-            if(typeof extend === 'string') {
-                extend = this.root.components[extend].definition;
-            }
-            this.root.components[id] = new this.root.classes.ComponentDefinition(id, component, extend, this.root);
-        }
+    createComponent(def) {
+        create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
         return {
-            createTag: () => this.createTag(id)
+            createTag: () => this.createTag(def.id)
         };
     }
     createTag(id) {

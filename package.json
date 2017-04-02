@@ -1,6 +1,6 @@
 {
-  "name": "SepCon",
-  "version": "1.0.0",
+  "name": "sepcon",
+  "version": "1.0.1",
   "description": "",
   "main": "dist/sepcon.js",
   "dependencies": {

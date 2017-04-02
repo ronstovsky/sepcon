@@ -1,34 +1,34 @@
 export default {
-    mount: {
-        send: function(step, hook) {
-            if(step.target === 'state') {
-                if(hook === 'pre') {
-                    this.base.state.addRoutes();
-                }
+mount: {
+    send: function(step, hook) {
+        if(step.target === 'state') {
+            if(hook === 'pre') {
+                this.base.state.addRoutes();
             }
-            else {
-                this.base.updateState();
-            }
-            return [this.params];
-        },
-        retrieve: function(step, hook, res) {
-            if(step.target === 'component') {
-                if (res && typeof res === 'string') {
-                    this.base.onRender(res);
-                }
-            }
-        },
-        sequence: [
-            {
-                target: 'state',
-                action: 'mount'
-            },
-            {
-                target: 'component',
-                action: 'render'
-            },
-        ]
+        }
+        else {
+            this.base.updateState();
+        }
+        return [this.params];
     },
+    retrieve: function(step, hook, res) {
+        if(step.target === 'component') {
+            if (res && typeof res === 'string') {
+                this.base.onRender(res);
+            }
+        }
+    },
+    sequence: [
+        {
+            target: 'state',
+            action: 'mount'
+        },
+        {
+            target: 'component',
+            action: 'render'
+        },
+    ]
+},
     localChange: {
         send: function(step, hook) {
             if(step.target === 'state') {

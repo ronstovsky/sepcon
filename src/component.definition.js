@@ -5,20 +5,113 @@ import { TAG_PREFIX, ADD_COMPONENT_DEFINITION } from './constants';
 
 //defining the component and registering its element
 export default class ComponentDefinition {
-    constructor(tag, definition, extend, root) {
-        if(extend) {
-            definition = common.extend(extend, definition);
-            definition.super = extend;
-            definition.state.super = extend.state;
+    constructor(def, root) {
+        let definition = def.component;
+        if(def.extend) {
+            definition = common.extend(def.extend, def.component);
+            definition.super = def.extend;
+            definition.state.super = def.extend.state;
         }
-        this.root = root;
-        this.tag = TAG_PREFIX + (this.root.hash ? this.root.hash+'-' : '') + tag;
         this.definition = definition;
+        this.root = root;
+        this.tag = TAG_PREFIX + (this.root.hash ? this.root.hash+'-' : '') + def.id;
+
+        if(def.decorators && def.decorators.length && def.decorators.length > 0) {
+            def.decorators.forEach(this.addDecorator.bind(this));
+        }
 
         this.root.addComponentDefinition(this);
         this.registerElement();
         return this;
     }
+
+    addDecorator(decorator) {
+        if(decorator.state) {
+            if(!this.definition.state) {
+                this.definition.state = {};
+            }
+            this.addDecoratorToState(decorator);
+        }
+        this.addDecoratorToComponent(decorator);
+    }
+    addDecoratorToState(decorator) {
+        const segs = ['local', 'external', 'global'];
+        if(decorator.state.props) {
+            segs.forEach(seg => {
+                if(decorator.state.props[seg]) {
+                    this.addToStateSegregation(decorator.state.props[seg], 'props', seg);
+                }
+            });
+            decorator.state.props = null;
+        }
+        if(decorator.state.methods) {
+            if(!this.definition.state.methods) {
+                this.definition.state.methods = {};
+            }
+            segs.forEach(seg => {
+                if(decorator.state.methods[seg]) {
+                    this.addToStateSegregation(decorator.state.methods[seg], 'methods', seg);
+                }
+            });
+            decorator.state.methods = null;
+        }
+        if(decorator.state.routes) {
+            this.addToStateRoutes(decorator.state.routes);
+            decorator.state.routes = null;
+        }
+        this.addToState(decorator.state);
+        decorator.state = null;
+    }
+    addToStateSegregation(map, key, seg) {
+        if(!this.definition.state[key]) {
+            this.definition.state[key] = {};
+        }
+        if(!this.definition.state[key][seg]) {
+            this.definition.state[key][seg] = {};
+        }
+        for(let prop in map) {
+            if(!this.definition.state[key][seg][prop]) {
+                this.definition.state[key][seg][prop] = map[prop];
+            }
+            else if(key === 'methods' && (seg === 'local' || seg === 'eternal')) {
+                this.definition.state[key][seg][prop] = common.concatMethods(map[prop], this.definition.state[key][seg][prop]);
+            }
+        }
+    }
+    addToStateRoutes(routes) {
+        if(!this.definition.state.routes || this.definition.state.routes.length === 0) {
+            this.definition.state.routes = routes;
+        }
+        else {
+            this.definition.state.routes = this.definition.state.routes.concat(routes);
+        }
+    }
+    addToState(map) {
+        for(let prop in map) {
+            if(!this.definition.state[prop]) {
+                this.definition.state[prop] = map[prop];
+            }
+            else {
+                if(typeof map[prop] === 'function') {
+                    this.definition.state[prop] = common.concatMethods(map[prop], this.definition.state[prop]);
+                }
+            }
+        }
+    }
+
+    addDecoratorToComponent(map) {
+        for(let prop in map) {
+            if(!this.definition[prop]) {
+                this.definition[prop] = map[prop];
+            }
+            else {
+                if(typeof map[prop] === 'function') {
+                    this.definition[prop] = common.concatMethods(map[prop], this.definition[prop]);
+                }
+            }
+        }
+    }
+
 
     //registering a new element to the DOM
     registerElement() {
@@ -38,8 +131,6 @@ export default class ComponentDefinition {
              * @constructor
              */
             connectedCallback() {
-
-
                 let coll = this.children;
                 let i = coll.length;
                 let n = i - 1 >> 0;
@@ -62,7 +153,6 @@ export default class ComponentDefinition {
                     this._componentElement = {
                         isInitialized: false,
                         path: common.getComponentElementsPath(this),
-                        //parent,
 
                         /**
                          * initialize binding of the element to its component.

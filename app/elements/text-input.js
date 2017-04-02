@@ -2,64 +2,66 @@ import { SepCon } from '../../src/index';
 import OneNumberChanger from './../components/one-number-changer';
 
 
-export default SepCon.createComponent('text-input', {
-    state: {
-        props: {
-            local: {
-                currentValue: '',
-                name: 'text-input',
-            }
-        },
-        methods: {
-            local: {
-                onchange(next, currentValue) {
-                    console.log('text-input changed', currentValue);
-                    this.setProps({
-                        currentValue
-                    }, true);
-                    next(currentValue);
-                },
-                onfocus(next) {
-                    next();
-                },
-                onblur(next) {
-                    next();
+export default SepCon.createComponent({
+    id: 'text-input',
+    component: {
+        state: {
+            props: {
+                local: {
+                    currentValue: '',
+                    name: 'text-input',
                 }
             },
-        },
-        mount() {
-            if(this.props.external.value) {
-                this.updateCurrentValueWithExternal();
+            methods: {
+                local: {
+                    onchange(next, currentValue) {
+                        console.log('text-input changed', currentValue);
+                        this.setProps({
+                            currentValue
+                        }, true);
+                        next(currentValue);
+                    },
+                    onfocus(next) {
+                        next();
+                    },
+                    onblur(next) {
+                        next();
+                    }
+                },
+            },
+            mount() {
+                if (this.props.external.value) {
+                    this.updateCurrentValueWithExternal();
+                }
+            },
+            change(changed) {
+                if (changed.value) {
+                    this.updateCurrentValueWithExternal();
+                }
+            },
+            updateCurrentValueWithExternal() {
+                this.setProps({currentValue: this.props.external.value}, true);
             }
         },
-        change(changed) {
-            if(changed.value) {
-                this.updateCurrentValueWithExternal();
-            }
+        'events': [
+            {event: 'keyup', selector: 'input', callback: 'handleChange'},
+            {event: 'focus', selector: 'input', callback: 'handleFocus'},
+            {event: 'blur', selector: 'input', callback: 'handleBlur'},
+        ],
+        'render'() {
+            return `<div class="sepcon sepcon-element">
+                <input name="${this.props.name}" value="${this.props.currentValue}"/>
+                ${OneNumberChanger.createTag().render()}
+            </div>`;
         },
-        updateCurrentValueWithExternal() {
-            this.setProps({ currentValue: this.props.external.value }, true);
+        handleChange(e) {
+            this.methods.onchange(e.target.value);
+        },
+        handleFocus(e) {
+            this.methods.onfocus();
+        },
+        handleBlur(e) {
+            this.methods.onblur();
         }
-    },
-    'events': [
-        {event: 'keyup', selector: 'input', callback: 'handleChange'},
-        {event: 'focus', selector: 'input', callback: 'handleFocus'},
-        {event: 'blur', selector: 'input', callback: 'handleBlur'},
-    ],
-    'render'() {
-        return `
-        <div class="sepcon sepcon-element">
-            <input name="${this.props.name}" value="${this.props.currentValue}"/>
-            ${OneNumberChanger.createTag().render()}
-        </div>`;
-    },
-    handleChange(e) {
-        this.methods.onchange(e.target.value);
-    },
-    handleFocus(e) {
-        this.methods.onfocus();
-    },
-    handleBlur(e) {
-        this.methods.onblur();
     }
 });

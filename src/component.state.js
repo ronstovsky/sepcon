@@ -200,18 +200,15 @@ export default class ComponentState {
      */
     getMethods() {
         const methods = common.clone(this.scoped.methods);
+        const segs = ['global', 'external' ,'local'];
         let combinedMethods = {};
-        for (let methodName in methods.global) {
-            combinedMethods[methodName] = chainMethods(methods, 'global', methodName).bind(this.scoped);
-        }
-        for (let methodName in methods.external) {
-            if (!combinedMethods[methodName]) {
-                combinedMethods[methodName] = chainMethods(methods, 'external', methodName).bind(this.scoped);
-            }
-        }
-        for (let methodName in methods.local) {
-            if (!combinedMethods[methodName]) {
-                combinedMethods[methodName] = chainMethods(methods, 'local', methodName).bind(this.scoped);
+
+        for(let i in segs) {
+            const seg = segs[i];
+            for (let methodName in methods[seg]) {
+                if (!combinedMethods[methodName]) {
+                    combinedMethods[methodName] = chainMethods(methods, seg, methodName).bind(this.scoped);
+                }
             }
         }
         return combinedMethods;
@@ -250,19 +247,13 @@ export default class ComponentState {
     }
 
     getReferenceStatePropName(originalProp) {
-        for (let prop in this.reference.global) {
-            if (this.reference.global[prop].key === originalProp) {
-                return prop;
-            }
-        }
-        for (let prop in this.reference.external) {
-            if (this.reference.external[prop].key === originalProp) {
-                return prop;
-            }
-        }
-        for (let prop in this.reference.local) {
-            if (this.reference.local[prop].key === originalProp) {
-                return prop;
+        const segs = ['global', 'external' ,'local'];
+        for(let i in segs) {
+            const seg = segs[i];
+            for (let prop in this.reference[seg]) {
+                if (this.reference[seg][prop].key === originalProp) {
+                    return prop;
+                }
             }
         }
     }

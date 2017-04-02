@@ -1,24 +1,27 @@
 import { SepCon } from '../../src/index';
 
-export default SepCon.createData('site', {
-    currentPage: {
-        id: null
-    },
-    pages: {
-        home: {
-            title: 'Home',
-            description: 'Welcome to here',
-            url: ''
+export default SepCon.createData({
+    id: 'site',
+    data: {
+        currentPage: {
+            id: null
         },
-        flux: {
-            title: 'Flux',
-            description: 'Modifiers vs. Data',
-            url: 'flux'
-        },
-        externals: {
-            title: 'Externals',
-            description: 'Passing props and methods',
-            url: 'externals'
-        },
+        pages: {
+            home: {
+                title: 'Home',
+                description: 'Welcome to here',
+                url: ''
+            },
+            flux: {
+                title: 'Flux',
+                description: 'Modifiers vs. Data',
+                url: 'flux'
+            },
+            externals: {
+                title: 'Externals',
+                description: 'Passing props and methods',
+                url: 'externals'
+            },
+        }
     }
 });

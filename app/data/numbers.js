@@ -1,5 +1,8 @@
 import { SepCon } from '../../src/index';
 
-export default SepCon.createData('numbers', {
-    numbers: {},
+export default SepCon.createData({
+    id: 'numbers',
+    data: {
+        numbers: {},
+    }
 });

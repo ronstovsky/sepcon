@@ -138,26 +138,30 @@ describe('Component Extension', ()=>{
         document.getElementById('ui-tests').appendChild(DIV);
     });
     it('should call inherited methods', function(done) {
-        const child = scope.createComponent('child'+testNum, 'parent', {
-            state: {
-                methods: {
-                    local: {
-                        printText() {
-                            return this.super.methods.local.printText.apply(this, arguments);
+        const child = scope.createComponent({
+            id: 'child'+testNum,
+            extend: 'parent',
+            component: {
+                state: {
+                    methods: {
+                        local: {
+                            printText() {
+                                return this.super.methods.local.printText.apply(this, arguments);
+                            }
                         }
+                    },
+                    mount() {
+                        this.setProps({
+                            text: 'Hello',
+                            number: 15
+                        }, true);
                     }
                 },
-                mount() {
-                    this.setProps({
-                        text: 'Hello',
-                        number: 15
-                    }, true);
+                render() {
+                    expect(this.methods.printText()).to.be.equal('Hello');
+                    expect(this.methods.printNumber()).to.be.equal(15);
+                    this.methods.done();
                 }
-            },
-            render() {
-                expect(this.methods.printText()).to.be.equal('Hello');
-                expect(this.methods.printNumber()).to.be.equal(15);
-                this.methods.done();
             }
         });
 

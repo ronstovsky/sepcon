@@ -5,9 +5,12 @@ var assert = chai.assert;
 describe('Component Integration', ()=>{
     let comp;
     it('should add new component under unique tag', ()=>{
-        comp = SepCon.createComponent('test-tag', {
-            render: function() {
-                return '<div>Test</div>';
+        comp = SepCon.createComponent({
+            id: 'test-tag',
+            component: {
+                render: function () {
+                    return '<div>Test</div>';
+                }
             }
         });
         assert.ok(comp);

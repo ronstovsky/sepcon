@@ -1,9 +1,10 @@
 import common from './common';
 
 export default class Data {
-    constructor(definition, extend, root) {
-        if(extend) {
-            definition = common.extend(extend, definition);
+    constructor(def, root) {
+        let definition = def.data;
+        if(def.extend) {
+            definition = common.extend(def.extend, def.data);
         }
         this.definition = definition;
         this.data = definition;

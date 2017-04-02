@@ -1,10 +1,11 @@
 import common from './common';
 
 export default class Modifier {
-    constructor(definition, extend, root) {
-        if(extend) {
-            definition = common.extend(extend, definition);
-            definition.super = extend;
+    constructor(def, root) {
+        let definition = def.modifier;
+        if(def.extend) {
+            definition = common.extend(def.extend, def.modifier);
+            definition.super = def.extend;
         }
         this.definition = definition;
         this.root = root;
