@@ -112,6 +112,9 @@ export default class Component {
     }
 
     onRender(html) {
+        if(!html || typeof html != 'string') {
+            return;
+        }
         if(html != this.currentHtml) {
             this.scoped.element.innerHTML = this.currentHtml = html;
             this.bindEvents();
