@@ -13,9 +13,7 @@ mount: {
     },
     retrieve: function(step, hook, res) {
         if(step.target === 'component') {
-            if (res && typeof res === 'string') {
-                this.base.onRender(res);
-            }
+            this.base.onRender(res);
         }
     },
     sequence: [
@@ -44,9 +42,7 @@ mount: {
         },
         retrieve: function(step, hook, res) {
             if(step.target === 'component') {
-                if (res && typeof res === 'string') {
-                    this.base.onRender(res);
-                }
+                this.base.onRender(res);
             }
         },
         sequence: [
@@ -69,9 +65,7 @@ mount: {
         },
         retrieve: function(step, hook, res) {
             if(step.target === 'component') {
-                if (res && typeof res === 'string') {
-                    this.base.onRender(res);
-                }
+                this.base.onRender(res);
             }
         },
         sequence: [
@@ -100,9 +94,7 @@ mount: {
         },
         retrieve: function(step, hook, res) {
             if(step.target === 'component') {
-                if (res && typeof res === 'string') {
-                    this.base.onRender(res);
-                }
+                this.base.onRender(res);
             }
         },
         sequence: [
@@ -130,9 +122,7 @@ mount: {
         },
         retrieve: function(step, hook, res) {
             if(step.target === 'component') {
-                if (res && typeof res === 'string') {
-                    this.base.onRender(res);
-                }
+                this.base.onRender(res);
             }
         },
         sequence: [
