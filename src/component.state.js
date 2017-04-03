@@ -409,7 +409,9 @@ export default class ComponentState {
         }
         else if (externalReferences.parent.scoped.props.global.hasOwnProperty(stateKey)) {
             externalReferences.global[key] = parentState.getGlobalDef()[stateKey];
-            externalReferences.global[key].key += '.' + path;
+            if(path) {
+                externalReferences.global[key].key += '.' + path;
+            }
         }
         else if (externalReferences.parent.scoped.props.external.hasOwnProperty(stateKey)) {
             externalReferences.external[key] = {key: item.value};
