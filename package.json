@@ -1,6 +1,6 @@
 {
   "name": "sepcon",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "",
   "main": "dist/sepcon.js",
   "dependencies": {
@@ -27,13 +27,10 @@
   },
   "scripts": {
     "start": "WEBPACK_ENV=dev babel-node ./dev.server.js",
-
     "preversion": "rm -rf dist/*",
     "version": "npm run dist && git add -A dist",
     "postversion": "git push && git push --tags",
-
     "dist": "WEBPACK_ENV=prod babel-node node_modules/webpack/bin/webpack.js",
-
     "test": "mocha --compilers js:babel-core/register --color -w test/*.test.js",
     "coverage": "babel-node ./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha test/"
   },
