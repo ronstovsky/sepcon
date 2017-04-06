@@ -38,6 +38,14 @@ export default SepCon.createComponent({
                     currentPage: {
                         data: 'site',
                         key: 'currentPage'
+                    },
+                    testWrong: {
+                        data: 'site',
+                        key: 'currentPage.fgsdfg'
+                    },
+                    testWrong2: {
+                        data: 'miauuuu',
+                        key: 'dsfgsdfg'
                     }
                 }
             },
@@ -49,6 +57,11 @@ export default SepCon.createComponent({
                 }
             }
         },
+        events: [
+            { event: 'click', selector: 'div#dfgdfg', handler: 'dfsgdfgs' },
+            { event: 'click', selector: 'div#dfg5e3dfg', handler: 'dfsgdfgs' },
+            { event: 'click', selector: 'div', handler: 'dfsgdfgs' },
+        ],
         'render'() {
             console.log('the actual component "render"', this);
             this.methods.debug();

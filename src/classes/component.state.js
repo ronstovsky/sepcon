@@ -1,7 +1,7 @@
-import common from './common';
+import common from '../shared/common';
 import sequencer from './sequencer';
-import ReferenceMap from './reference.map';
-import {TAG_PROPERTIES, TAG_METHODS} from './constants';
+import ReferenceMap from './../shared/reference.map.js';
+import {TAG_PROPERTIES, TAG_METHODS} from './../shared/constants';
 
 const defaultSegregation = {
     local: {},
@@ -49,7 +49,13 @@ const _buildGlobalProps = (globals, root) => {
         const dataKey = globals[prop].key;
 
         if (!root.datas[dataName]) {
-            console.warn(`no such data as ${dataName} defined`);
+            root.logs.print({
+                title: { content: `Trying To Reach An Undefined Data` },
+                rows: [
+                    { style: 'label', content: 'Data Id' },
+                    { style: 'code', content: dataName },
+                ]
+            });
         }
         else {
             _props[prop] = root.datas[dataName].getProp(dataKey);

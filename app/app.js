@@ -1,14 +1,19 @@
 import { SepCon } from './../src/index';
 
-//SepCon.setConfiguration({
-//    router: {
-//        mode: 'hash'
-//    }
-//});
+SepCon.setConfiguration({
+    //logs: false,
+    //router: {
+    //    mode: 'hash'
+    //},
+});
 class Component extends SepCon.classes.Component {
     initialize() {
-        console.log('Extended Component - initialize()');
+        //console.log('Extended Component - initialize()');
         super.initialize();
+    }
+    resume(element) {
+        console.log('extend resume', element);
+        super.resume(element);
     }
 }
 SepCon.classes.Component = Component;

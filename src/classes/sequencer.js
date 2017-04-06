@@ -1,4 +1,4 @@
-import common from './common';
+import common from '../shared/common';
 
 export default class {
     constructor(base, config) {

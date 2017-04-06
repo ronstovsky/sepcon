@@ -1,6 +1,6 @@
-import common from './common';
+import common from '../shared/common';
 import 'document-register-element';
-import { TAG_PREFIX, ADD_COMPONENT_DEFINITION } from './constants';
+import { TAG_PREFIX, ADD_COMPONENT_DEFINITION } from './../shared/constants';
 
 
 //defining the component and registering its element
@@ -146,7 +146,15 @@ export default class ComponentDefinition {
                 Promise.resolve().then(()=>{
                     if(!common.isInDome(this)) return false;
                     if(common.isDeepNestedInSameComponent(this)) {
-                        console.error('components cannot be nested inside themselved', common.getComponentElementsPath(this, true, true), this);
+                        root.logs.print({
+                            title: { content: 'Components Cannot Be Nested Inside Themselves' },
+                            rows: [
+                                { style: 'label', content: 'Components Path' },
+                                { style: 'code', content: common.getComponentElementsPath(this, true, true) },
+                                { style: 'label', content: 'DOM Element' },
+                                { content: this }
+                            ]
+                        });
                         return false;
                     }
                     const parent = common.getParentComponentElement(this);

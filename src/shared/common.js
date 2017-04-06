@@ -287,13 +287,6 @@ export default {
 
         if(!id) {
             item = this.getComponent(sameTagList, element);
-            //console.groupCollapsed('No use of data-identifier');
-            //console.log('PATH:', element._componentElement.path.split('>'));
-            //console.info(`
-            //    You should use '${TAG_IDENTIFIER}="SOME_ID" if you have several instances of the same component
-            //    Otherwise will use dependancy on element index to bind the element to its component class
-            //`);
-            //console.groupEnd('No use of data-identifier')
         }
         return item;
     }

@@ -1,12 +1,14 @@
-import common from './common';
+import common from '../shared/common';
 
 export default class Data {
     constructor(def, root) {
+        this.root = root;
+
         let definition = def.data;
         if(def.extend) {
-            definition = common.extend(def.extend, def.data);
+            definition = common.extend(def.extend.data, def.data);
         }
-        this.definition = definition;
+        this.definition = def;
         this.data = definition;
     }
     setProps(props) {
@@ -29,6 +31,20 @@ export default class Data {
         const props = prop.split('.');
         let value = this.data;
         for(let i=0,e=props.length;i<e;i++){
+            if(value[props[i]] === undefined) {
+                this.root.logs.print({
+                    title: { content: `Could Not Find a Requested Data Property` },
+                    rows: [
+                        { style: 'label', content: 'Data Id' },
+                        { style: 'code', content: this.definition.id },
+                        { style: 'label', content: 'Properties Path' },
+                        { style: 'code', content: prop },
+                        { style: 'label', content: 'Data (snapshot)' },
+                        { style: 'code', content: common.clone(this.data) },
+                    ]
+                });
+                return undefined;
+            }
             value = value[props[i]];
         }
         switch(typeof value) {
