@@ -19,18 +19,9 @@ export default {
                     const propPath = path ? path + '.' + prop : prop;
                     changedProps[propPath] = this.getChangedAsObject(source[prop], map[prop]);
 
-                    let changedObject = this.setChanges(source[prop], map[prop], change, isShallow, propPath, source, prop);
+                    let changedObject = this.setChanges(source[prop], map[prop], isSourceObject && change, isShallow, propPath, source, prop);
                     if(Object.keys(changedObject).length > 0) {
                         Object.assign(changedProps, changedObject);
-                    }
-
-                    if(change){
-                        if(parent) {
-                            parent[parentKey] = Object.assign(source, map);
-                        }
-                        else {
-                            Object.assign(source[prop], map[prop]);
-                        }
                     }
                 }
             }
