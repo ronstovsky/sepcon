@@ -1,4 +1,5 @@
-import common from '../shared/common';
+import common from '../shared/utils.common';
+import changes from '../shared/utils.changes';
 import logs from './logs';
 import { TAG_IDENTIFIER } from './../shared/constants';
 
@@ -114,7 +115,7 @@ export default class Component {
         this.scoped.element.innerHTML = this.currentHtml;
         this.bindEvents();
         this.state.addRoutes();
-        const localChanged = common.setChanges(this.componentPrevProps, this.scoped.props);
+        const localChanged = changes.setChanges(this.componentPrevProps, this.scoped.props);
         if (Object.keys(localChanged).length > 0 || isInitialHTMLChanged) {
             this.sequencer.startSequence('externalChange', localChanged);
         }

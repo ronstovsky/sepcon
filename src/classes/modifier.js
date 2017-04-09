@@ -1,4 +1,4 @@
-import common from '../shared/common';
+import common from '../shared/utils.common';
 
 export default class Modifier {
     constructor(def, root) {

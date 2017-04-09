@@ -1,6 +1,6 @@
 import Root from './root';
 import { DATA_CHANGES_AFFECTING } from './shared/constants';
-import common from './shared/common';
+import common from './shared/utils.common';
 
 function create(def, type, defs, cls) {
     let definition = common.clone(def);

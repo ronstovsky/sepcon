@@ -1,4 +1,4 @@
-import common from '../shared/common';
+import common from '../shared/utils.common';
 import 'document-register-element';
 import { TAG_PREFIX, ADD_COMPONENT_DEFINITION } from './../shared/constants';
 

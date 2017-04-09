@@ -7,7 +7,7 @@ import ComponentTag from './classes/component.tag.js';
 import Sequencer from './classes/sequencer';
 import Router from './classes/router';
 import Logs from './classes/logs';
-import common from './shared/common';
+import common from './shared/utils.common';
 import { ComponentItem, ComponentDefinitionItem } from './classes/component.mapping.js';
 
 import { DATA_CHANGED, ADD_COMPONENT } from './shared/constants';

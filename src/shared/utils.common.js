@@ -1,47 +1,5 @@
 import { TAG_PREFIX, TAG_IDENTIFIER } from './constants';
 
-
-function getChangedPropsInObject(oldObj, newObj, props = {}, parent = null) {
-    for(let prop in newObj) {
-        if(typeof oldObj[prop] === 'object' && typeof newObj[prop] === 'object') {
-            const isDifferent = JSON.stringify(oldObj[prop]) != JSON.stringify(newObj[prop]);
-            if(isDifferent) {
-                let base = {};
-                base[prop] = [];
-                props[prop] = getChangedPropsInObject(oldObj[prop], newObj[prop], base, prop);
-            }
-        }
-        else if(oldObj[prop] != newObj[prop]){
-            props[parent].push(prop);
-        }
-    }
-    return props;
-}
-function getChangedAsObject(key, oldValue, newValue) {
-    return {
-        [key]: {
-            oldValue: typeof oldValue !== 'undefined' ? JSON.parse(JSON.stringify(oldValue)) : null,
-            newValue: typeof newValue !== 'undefined' ? JSON.parse(JSON.stringify(newValue)) : null,
-        }
-    };
-}
-function getChangedAsObjects(source, map, object, path = '', objects = []) {
-    for(let prop in object) {
-        Object.assign(objects, getChangedAsObject(path ? path : prop, source[prop], map[prop]));
-
-        path += prop;
-        if(object[prop] instanceof Array) {
-            for(let i=0, e=object[prop].length; i<e; i++) {
-                Object.assign(objects, getChangedAsObject(path + '.' + object[prop][i], source[prop][object[prop][i]], map[prop] && map[prop][object[prop][i]] ? map[prop][object[prop][i]] : null));
-            }
-        }
-        else if(typeof object[prop] === 'object') {
-            getChangedAsObjects(source, map, object[prop], path, objects);
-        }
-    }
-    return objects;
-}
-
 export default {
     /**
      * get a deep cloned + extended (if 'to' argument is set) object
@@ -99,58 +57,6 @@ export default {
      */
     hookString(hook, action){
         return (hook ? `${hook}:` : '') + action;
-    },
-
-    /**
-     * mutate original data and returns the array of changed properties
-     * @param source (object) - original data
-     * @param map (object) - new data to compare against 'source'
-     * @param change (boolean) - if true - will change the values in 'source' according to 'map'
-     * @returns {{}} - map of changed properties in 'source', e.g.:
-     * {
-     *      someProp: {
-     *          oldValue: '1',
-     *          newValue: '2'
-     *      }
-     * }
-     */
-    setChanges(source, map, change, isShallow) {
-        let changedProps = {};
-        for(let prop in map) {
-            let isDifferent = false;
-            const isSourceObject = typeof source[prop] === 'object' && source[prop] !== null;
-            const isMapObject = typeof map[prop] === 'object' && map[prop] !== null;
-            if(isSourceObject || isMapObject) {
-                let base = {};
-                base[prop] = [];
-                let changedPropsInObject = getChangedPropsInObject(source[prop], map[prop], base, prop);
-                isDifferent = Object.keys(changedPropsInObject[prop]).length > 0;
-                if (isDifferent) {
-                    if(!isShallow) {
-                        Object.assign(changedProps, getChangedAsObjects(source, map, changedPropsInObject));
-                    }
-                    else {
-                        const clonedNewValue = map[prop] ? JSON.parse(JSON.stringify(map[prop])) : map[prop];
-                        const clonedOldValue = source[prop] ? JSON.parse(JSON.stringify(source[prop])) : source[prop];
-                        Object.assign(changedProps, getChangedAsObject(prop, clonedOldValue, clonedNewValue));
-                    }
-                    if (change) {
-                        source[prop] = JSON.parse(JSON.stringify(map[prop]));
-                    }
-                }
-            }
-            else {
-                if(source[prop] != map[prop]) {
-                    const clonedNewValue = map[prop] ? JSON.parse(JSON.stringify(map[prop])) : map[prop];
-                    const clonedOldValue = source[prop] ? JSON.parse(JSON.stringify(source[prop])) : source[prop];
-                    Object.assign(changedProps, getChangedAsObject(prop, clonedOldValue, clonedNewValue));
-                    if(change){
-                        source[prop] = clonedNewValue;
-                    }
-                }
-            }
-        }
-        return changedProps;
     },
 
     formatValueForValidJSON(obj) {

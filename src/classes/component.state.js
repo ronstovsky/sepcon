@@ -1,4 +1,5 @@
-import common from '../shared/common';
+import common from '../shared/utils.common';
+import changes from '../shared/utils.changes';
 import sequencer from './sequencer';
 import ReferenceMap from './../shared/reference.map.js';
 import {TAG_PROPERTIES, TAG_METHODS} from './../shared/constants';
@@ -167,7 +168,7 @@ export default class ComponentState {
         }
 
         this.scoped.setProps = (props, silent) => {
-            const changedProps = common.setChanges(this.scoped.props.local, props, silent, true);
+            const changedProps = changes.setChanges(this.scoped.props.local, props, silent, true);
             if (silent) {
                 this.updateLocalProps(changedProps);
                 return;

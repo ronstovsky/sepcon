@@ -1,4 +1,5 @@
-import common from '../shared/common';
+import common from '../shared/utils.common';
+import changes from '../shared/utils.changes';
 
 export default class Data {
     constructor(def, root) {
@@ -13,7 +14,7 @@ export default class Data {
     }
     setProps(props) {
         props = common.formatValueForValidJSON(props);
-        return common.setChanges(this.data, props, true);
+        return changes.setChanges(this.data, props, true);
     }
     /**
      * gets an array of keys and returns an object of these keys, populated by corresponding values
