@@ -133,6 +133,71 @@ describe('Common (Utils)', ()=>{
         expect(changed).to.have.property('object.3.prop3');
     });
 
+    it('should detect removed properties from source object', () => {
+        let source = {
+            array: [
+                { prop23: 3 },
+            ],
+            object: {
+                0: { prop1: 'a' },
+                1: { prop2: 'b' },
+                2: { prop3: 'c' },
+                3: { prop3: 'c' },
+                4: { prop3: 'c' },
+            }
+        };
+        let map = {
+            primitivesArray: [1, 2, 3, 4],
+            primitivesObject: {0: 1, 1: 2, 2: 3, 3: 4},
+            array: [
+                {
+                    prop1: 1,
+                    prop2: 1,
+                    prop3: 1,
+                },
+                { prop2: 2 },
+                { prop3: 3 },
+                { prop3: 4 },
+            ],
+            object: {
+                0: {
+                    prop1: 'a',
+                    prop2: 'a',
+                    prop3: 'a',
+                },
+                1: { prop2: 'b' },
+                2: { prop3: 'c' },
+                3: { prop3: 'd' },
+            }
+        };
+
+        const changed = changes.setChanges(source, map);
+        console.log('changed - removed', changed);
+
+
+        expect(changed).to.have.property('primitivesArray');
+        expect(changed).to.have.property('primitivesArray.3');
+
+        expect(changed).to.have.property('primitivesObject');
+        expect(changed).to.have.property('primitivesObject.3');
+
+        expect(changed).to.have.property('array');
+        expect(changed).to.have.property('array.0');
+        expect(changed).to.have.property('array.0.prop2');
+        expect(changed).to.have.property('array.0.prop3');
+
+        expect(changed).to.have.property('array.3');
+        expect(changed).to.have.property('array.3.prop3');
+
+        expect(changed).to.have.property('object');
+        expect(changed).to.have.property('object.0');
+        expect(changed).to.have.property('object.0.prop2');
+        expect(changed).to.have.property('object.0.prop3');
+
+        expect(changed).to.have.property('object.3');
+        expect(changed).to.have.property('object.3.prop3');
+    });
+
     it('should add any new data from map to source if argument[2] -> true', () => {
         let source = {};
         let map = {
@@ -197,9 +262,15 @@ describe('Common (Utils)', ()=>{
 
     it('should alter the source to match the map if argument[2] -> true', () => {
         let source = {
-            primitivesObject: {5: 6},
+            primitivesObject2: {1: 6},
+            object2: {
+                1: { prop5: 'f' }
+            },
             object: {
-                5: { prop5: 'f' }
+                0: {
+                    prop4: 'b'
+                },
+                5: { prop0: 'z' }
             }
         };
         let map = {
@@ -235,12 +306,13 @@ describe('Common (Utils)', ()=>{
         console.log(JSON.parse(JSON.stringify(source)));
 
         expect(source).to.have.property('primitivesArray');
-        expect(source.primitivesObject).to.have.property(5);
-        expect(source.primitivesObject['5']).to.be.equal(6);
+        expect(source).to.have.property('primitivesObject2');
+        expect(source.object2).to.have.property('1');
+        expect(source.object2['1']).to.have.property('prop5');
 
-        expect(source.object).to.have.property('5');
-        expect(source.object['5']).to.be.a('object');
-        expect(source.object['5'].prop5).to.be.equal('f');
+        expect(source.object).to.not.have.property(5);
+
+        expect(source.object['0']).to.not.have.property('prop4');
 
 
         expect(source.primitivesArray[1]).to.be.equal(2);

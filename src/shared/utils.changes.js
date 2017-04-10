@@ -40,20 +40,10 @@ export default {
                     if(!parent[parentKey]) {
                         parent[parentKey] = map;
                     }
-                    if(isSourceObject) {
-                        parent[parentKey][prop] = Object.assign(source[prop], map[prop]);
-                    }
-                    else {
-                        parent[parentKey][prop] = map[prop];
-                    }
+                    parent[parentKey][prop] = map[prop];
                 }
                 else {
-                    if(isSourceObject) {
-                        Object.assign(source[prop], map[prop]);
-                    }
-                    else {
-                        source[prop] = map[prop];
-                    }
+                    source[prop] = map[prop];
                 }
             }
         }
