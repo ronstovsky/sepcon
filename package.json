@@ -1,15 +1,16 @@
 {
   "name": "sepcon",
-  "version": "2.2.3",
+  "version": "2.2.8",
   "description": "",
-  "main": "dist/sepcon.js",
+  "main": "dist/sepcon.min.js",
   "dependencies": {
     "babel-core": "^6.18.2",
     "babel-loader": "^6.2.9",
     "babel-polyfill": "^6.16.0",
     "babel-preset-es2015": "^6.18.0",
-    "webpack": "^1.14.0",
-    "document-register-element": "^1.3.0"
+    "console-polyfill": "^0.2.3",
+    "document-register-element": "^1.3.0",
+    "webpack": "^1.14.0"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
@@ -26,7 +27,8 @@
   },
   "scripts": {
     "start": "WEBPACK_ENV=dev babel-node ./dev.server.js",
-    "server": "babel-watch server",
+    "preversion": "rm -rf dist/*",
+    "version": "npm run dist && git add dist",
     "dist": "WEBPACK_ENV=prod babel-node node_modules/webpack/bin/webpack.js",
     "test": "mocha --compilers js:babel-core/register --color -w test/*.test.js",
     "coverage": "babel-node ./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha test/"

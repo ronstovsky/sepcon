@@ -1,18 +1,19 @@
-import ComponentDefinition from './component.definition';
-import Component from './component';
-import ComponentState from './component.state';
-import Modifier from './modifier';
-import Data from './data';
-import ComponentTag from './component.tag';
-import Sequencer from './sequencer';
-import Router from './router';
-import common from './common';
-import { ComponentItem, ComponentDefinitionItem } from './component.mapping';
+import ComponentDefinition from './classes/component.definition.js';
+import Component from './classes/component';
+import ComponentState from './classes/component.state.js';
+import Modifier from './classes/modifier';
+import Data from './classes/data';
+import ComponentTag from './classes/component.tag.js';
+import Sequencer from './classes/sequencer';
+import Router from './classes/router';
+import Logs from './classes/logs';
+import common from './shared/utils.common';
+import { ComponentItem, ComponentDefinitionItem } from './classes/component.mapping.js';
 
-import { DATA_CHANGED, ADD_COMPONENT } from './constants';
+import { DATA_CHANGED, ADD_COMPONENT } from './shared/constants';
 
-import sequencerConfig from './sequencer.config';
-import routerConfig from './router.config';
+import sequencerConfig from './config/sequencer.config.js';
+import routerConfig from './config/router.config.js';
 
 const router = new Router();
 
@@ -27,6 +28,7 @@ export default class Root {
             Data,
             ComponentTag,
             Sequencer,
+            Logs
         };
 
         //globals
@@ -34,6 +36,7 @@ export default class Root {
         this.componentsDefinition = [];
         this.componentElements = [];
         this.router = router;
+        this.logs = new Logs();
 
         //scoped
         this.datas = {};
@@ -63,15 +66,18 @@ export default class Root {
                 this.routerConfig = Object.assign(this.routerConfig, config.router);
                 this.router.config(this.routerConfig);
             }
+            if (config.logs !== undefined) {
+                this.logs.setActive(config.logs);
+            }
         }
     }
 
     /* application's global functionality */
-    executeModifier(modifier, id) {
+    executeModifier(modifier, key) {
         const originalArgs = [].slice.call(arguments);
         const passedArgs = originalArgs.slice(2);
-        if(this.modifiers[modifier] && this.modifiers[modifier].has(id)) {
-            this.modifiers[modifier].stack(id, passedArgs);
+        if(this.modifiers[modifier] && this.modifiers[modifier].has(key)) {
+            this.modifiers[modifier].stack(key, passedArgs);
         }
         //should execute after current runtime for cases of multiple changes of the same data
         Promise.resolve().then(()=>{

@@ -1,7 +1,8 @@
-import common from './common';
+import common from '../shared/utils.common';
+import changes from '../shared/utils.changes';
 import sequencer from './sequencer';
-import ReferenceMap from './reference.map';
-import {TAG_PROPERTIES, TAG_METHODS} from './constants';
+import ReferenceMap from './../shared/reference.map.js';
+import {TAG_PROPERTIES, TAG_METHODS} from './../shared/constants';
 
 const defaultSegregation = {
     local: {},
@@ -49,7 +50,13 @@ const _buildGlobalProps = (globals, root) => {
         const dataKey = globals[prop].key;
 
         if (!root.datas[dataName]) {
-            console.warn(`no such data as ${dataName} defined`);
+            root.logs.print({
+                title: { content: `Trying To Reach An Undefined Data` },
+                rows: [
+                    { style: 'label', content: 'Data Id' },
+                    { style: 'code', content: dataName },
+                ]
+            });
         }
         else {
             _props[prop] = root.datas[dataName].getProp(dataKey);
@@ -161,7 +168,7 @@ export default class ComponentState {
         }
 
         this.scoped.setProps = (props, silent) => {
-            const changedProps = common.setChanges(this.scoped.props.local, props, silent, true);
+            const changedProps = changes.setChanges(this.scoped.props.local, props, silent, true);
             if (silent) {
                 this.updateLocalProps(changedProps);
                 return;
@@ -170,6 +177,9 @@ export default class ComponentState {
                 this.component.onStateChange(changedProps);
             }
         };
+
+        this.scoped.getProps = () => this.getProps();
+        this.scoped.getMethods = () => this.getMethods();
 
         this.scoped.router = this.root.router;
         this.scoped.execute = this.root.executeModifier.bind(this.root);

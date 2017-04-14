@@ -1,12 +1,20 @@
 import Root from './root';
-import { DATA_CHANGES_AFFECTING } from './constants';
-import common from './common';
+import { DATA_CHANGES_AFFECTING } from './shared/constants';
+import common from './shared/utils.common';
 
 function create(def, type, defs, cls) {
     let definition = common.clone(def);
 
     if(defs[definition.id]) {
-        console.error(`The ${type} id "${definition.id}" already exists`);
+        this.root.logs.print({
+            title: { content: `Tried To Create A Definition With Existing Id`},
+            rows: [
+                { style: 'label', content: 'Object Type' },
+                { style: 'code', content: type},
+                { style: 'label', content: 'Existing Id' },
+                { style: 'code', content: definition.id},
+            ]
+        });
         return false;
     }
     else {
@@ -41,6 +49,7 @@ class SepConClass {
     createComponent(def) {
         create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
         return {
+            id: def.id,
             createTag: () => this.createTag(def.id)
         };
     }

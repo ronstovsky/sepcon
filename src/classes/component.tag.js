@@ -1,5 +1,5 @@
-import ReferenceMap from './reference.map';
-import { TAG_PREFIX, TAG_PROPERTIES, TAG_METHODS, TAG_IDENTIFIER } from './constants';
+import ReferenceMap from './../shared/reference.map.js';
+import { TAG_PREFIX, TAG_PROPERTIES, TAG_METHODS, TAG_IDENTIFIER } from './../shared/constants';
 
 export default class ComponentTag {
     constructor(app, tag) {

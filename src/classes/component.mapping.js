@@ -1,4 +1,4 @@
-import { TAG_IDENTIFIER, TAG_PROPERTIES, TAG_METHODS } from './constants';
+import { TAG_IDENTIFIER, TAG_PROPERTIES, TAG_METHODS } from './../shared/constants';
 
 function formatGlobals(global) {
     let globals = {};

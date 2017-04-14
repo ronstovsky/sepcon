@@ -1,10 +1,13 @@
-import common from './common';
-import { TAG_IDENTIFIER } from './constants';
+import common from '../shared/utils.common';
+import changes from '../shared/utils.changes';
+import logs from './logs';
+import { TAG_IDENTIFIER } from './../shared/constants';
 
 // will return a wrapped component with the framework's integration layer
 export default class Component {
 
     constructor(componentDefinition, root, element, parent, parentElement) {
+        this.root = root;
         this.active = false;
 
         this._eventsCallbacks = {};
@@ -21,11 +24,11 @@ export default class Component {
 
         this.parent = parent;
 
-        this.state = new root.classes.ComponentState(componentDefinition.state, this, root);
-        this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
+        this.state = new this.root.classes.ComponentState(componentDefinition.state, this, this.root);
+        this.sequencer = new this.root.classes.Sequencer(this, this.root.sequencerConfig);
 
 
-        this.mapItem = root.addComponent(this, element, parentElement);
+        this.mapItem = this.root.addComponent(this, element, parentElement);
     }
 
     bindEvents() {
@@ -36,10 +39,15 @@ export default class Component {
 
         this.scoped.events.forEach((evObj)=> {
             //getting the target - selector or the whole element
-            const _target = evObj.selector ? this.scoped.element.querySelector(evObj.selector) : this.scoped.element;
+            const _target = evObj.selector ? this.scoped.element.querySelectorAll(evObj.selector) : this.scoped.element;
+            if(!this.validateEvents(_target, evObj, true)) {
+                return;
+            }
             //storing callbacks in a map to keep reference for later unbinding on demand
             this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback] = this.scoped[evObj.callback].bind(this.scoped);
-            _target.addEventListener(evObj.event, this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
+            _target.forEach(trg => {
+                trg.addEventListener(evObj.event, this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
+            });
         });
         this.scoped.isInitiatedEvents = true;
     }
@@ -49,10 +57,40 @@ export default class Component {
         this.scoped.events.forEach((evObj)=> {
             //getting the target - selector or the whole element
             const _target = evObj.selector ? this.scoped.element.querySelector(evObj.selector) : this.scoped.element;
+            if(!this.validateEvents(_target, evObj)) {
+                return;
+            }
             //using the eventsCallback map for live reference for removing it on demand
             _target.removeEventListener(evObj.event, this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
         });
         this.scoped.isInitiatedEvents = false;
+    }
+    validateEvents(el, ev, bind) {
+        if(!el) {
+            this.root.logs.print({
+                title: { content: `Could Not Find An Element For ${bind ? 'Binding' : 'Unbinding'} An Event ${bind ? 'To' : 'From'}` },
+                rows: [
+                    { style: 'label', content: 'DOM element' },
+                    { style: 'code', content: this.scoped.element },
+                    { style: 'label', content: 'event object' },
+                    { style: 'code', content: ev },
+                ]
+            });
+            return false;
+        }
+        if(!this.scoped[ev.callback]) {
+            this.root.logs.print({
+                title: { content: `Could Not Find The Specified Handler For ${bind ? 'Binding' : 'Unbinding'} ${bind ? 'To' : 'From'} An Event` },
+                rows: [
+                    { style: 'label', content: 'existing methods' },
+                    { style: 'code', content: Object.keys(this.scoped.methods) },
+                    { style: 'label', content: 'event object' },
+                    { style: 'code', content: ev },
+                ]
+            });
+            return false;
+        }
+        return true;
     }
 
     initialize(element) {
@@ -79,7 +117,7 @@ export default class Component {
         this.scoped.element.innerHTML = this.currentHtml;
         this.bindEvents();
         this.state.addRoutes();
-        const localChanged = common.setChanges(this.componentPrevProps, this.scoped.props);
+        const localChanged = changes.setChanges(this.componentPrevProps, this.scoped.props);
         if (Object.keys(localChanged).length > 0 || isInitialHTMLChanged) {
             this.sequencer.startSequence('externalChange', localChanged);
         }

@@ -1,4 +1,4 @@
-import common from './common';
+import common from '../shared/utils.common';
 
 export default class Modifier {
     constructor(def, root) {
@@ -16,8 +16,13 @@ export default class Modifier {
             this.scoped.methods[methodName] = this.scoped.methods[methodName].bind(this.scoped);
         }
 
+
+        this.scoped.resetProps = (data) => {
+            this.root.changedData(data, this.root.datas[data].resetProps());
+        };
         this.scoped.setProps = (data, propsMap) => {
-            this.root.changedData(data, this.root.datas[data].setProps(propsMap));
+            const props = common.clone(propsMap);
+            this.root.changedData(data, this.root.datas[data].setProps(props));
         };
         this.scoped.getProp = (data, prop) => {
             return this.root.datas[data].getProp(prop);
