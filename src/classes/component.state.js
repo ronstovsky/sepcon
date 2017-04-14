@@ -169,11 +169,11 @@ export default class ComponentState {
 
         this.scoped.setProps = (props, silent) => {
             const changedProps = changes.setChanges(this.scoped.props.local, props, silent, true);
-            if (silent) {
-                this.updateLocalProps(changedProps);
-                return;
-            }
             if (Object.keys(changedProps).length > 0) {
+                if (silent) {
+                    this.updateLocalProps(changedProps);
+                    return;
+                }
                 this.component.onStateChange(changedProps);
             }
         };

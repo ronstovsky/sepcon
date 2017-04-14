@@ -16,12 +16,17 @@ export default {
                 const flatMap = map[prop] ? JSON.stringify(map[prop]) : '';
                 isDifferent = flatSource !== flatMap;
                 if(isDifferent) {
-                    const propPath = path ? path + '.' + prop : prop;
-                    changedProps[propPath] = this.getChangedAsObject(source[prop], map[prop]);
+                    if(isShallow) {
+                        changedProps[prop] = this.getChangedAsObject(source[prop], map[prop]);
+                    }
+                    else {
+                        const propPath = path ? path + '.' + prop : prop;
+                        changedProps[propPath] = this.getChangedAsObject(source[prop], map[prop]);
 
-                    let changedObject = this.setChanges(source[prop], map[prop], isSourceObject && change, isShallow, propPath, source, prop);
-                    if(Object.keys(changedObject).length > 0) {
-                        Object.assign(changedProps, changedObject);
+                        let changedObject = this.setChanges(source[prop], map[prop], isSourceObject && change, isShallow, propPath, source, prop);
+                        if(Object.keys(changedObject).length > 0) {
+                            Object.assign(changedProps, changedObject);
+                        }
                     }
                 }
             }

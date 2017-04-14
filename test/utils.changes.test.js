@@ -106,7 +106,6 @@ describe('Common (Utils)', ()=>{
         };
 
         const changed = changes.setChanges(source, map);
-        console.log('changed', changed);
 
         expect(changed).to.have.property('prop4');
 
@@ -172,7 +171,6 @@ describe('Common (Utils)', ()=>{
         };
 
         const changed = changes.setChanges(source, map);
-        console.log('changed - removed', changed);
 
 
         expect(changed).to.have.property('primitivesArray');
@@ -230,7 +228,6 @@ describe('Common (Utils)', ()=>{
         };
 
         changes.setChanges(source, map, true);
-        console.log(JSON.parse(JSON.stringify(source)));
 
         expect(source).to.have.property('prop1');
         expect(source).to.have.property('prop2');
@@ -303,7 +300,6 @@ describe('Common (Utils)', ()=>{
         };
 
         changes.setChanges(source, map, true);
-        console.log(JSON.parse(JSON.stringify(source)));
 
         expect(source).to.have.property('primitivesArray');
         expect(source).to.have.property('primitivesObject2');
@@ -334,5 +330,62 @@ describe('Common (Utils)', ()=>{
         expect(source.object['0']).to.have.property('prop1');
         expect(source.object['0']).to.have.property('prop2');
         expect(source.object['0']).to.have.property('prop3');
+    });
+
+    it('should return a flat object of the new values', () => {
+        let source = {
+            primitivesObject: {1: 6},
+            object2: {
+                1: { prop5: 'f' }
+            },
+            object: {
+                0: {
+                    prop4: 'b'
+                },
+                5: { prop0: 'z' }
+            }
+        };
+        let map = {
+            prop1: '-',
+            prop2: '/',
+            prop3: '|',
+            prop4: '\\',
+            primitivesArray: [1, 2, 3, 4],
+            primitivesObject: {0: 1, 1: 2, 2: 3, 3: 4},
+            array: [
+                {
+                    prop1: 1,
+                    prop2: 1,
+                    prop3: 1,
+                },
+                { prop2: 2 },
+                { prop3: 3 },
+                { prop3: 4 },
+            ],
+            object: {
+                0: {
+                    prop1: 'a',
+                    prop2: 'a',
+                    prop3: 'a',
+                },
+                1: { prop2: 'b' },
+                2: { prop3: 'c' },
+                3: { prop3: 'd' },
+            }
+        };
+
+        const changed = changes.setChanges(source, map, false, true);
+        console.log(changed);
+
+        expect(changed).to.have.property('prop1');
+        expect(changed).to.have.property('prop2');
+        expect(changed).to.have.property('prop3');
+        expect(changed).to.have.property('object');
+        expect(changed).to.not.have.property('primitivesArray.0');
+        expect(changed).to.not.have.property('primitivesObject.0');
+        expect(changed).to.not.have.property('primitivesObject.1');
+        expect(changed).to.not.have.property('object.0');
+        expect(changed).to.not.have.property('object.1');
+        expect(changed).to.not.have.property('object.5');
     });
 });
