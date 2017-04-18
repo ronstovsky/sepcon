@@ -132,7 +132,7 @@ export default class Component {
         this.state.setExternals();
         this.state.updateReferencedProps();
         this.state.updateGlobalProps();
-        this.mapItem.updateAfterComponentInit();
+        this.mapItem.setRefGlobal();
     }
 
     onStateChange(changed) {

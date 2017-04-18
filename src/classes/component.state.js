@@ -141,31 +141,10 @@ export default class ComponentState {
     constructor(state, component, root) {
         this.root = root;
         this.definition = common.clone(_defaultState(state));
+        this.component = component;
         this.scoped = common.clone(this.definition);
 
-        for (let methodName in this.scoped.methods.local) {
-            this.scoped.methods.local[methodName].bind(this.scoped);
-        }
-
-        for (let methodName in this.scoped.methods.external) {
-            this.scoped.methods.external[methodName].bind(this.scoped);
-        }
-
-        for (let methodName in this.definition.methods.global) {
-            this.scoped.methods.global[methodName] = function () {
-                const originalArgs = [].slice.call(arguments);
-                let mergedArgs = [this.definition.methods.global[methodName].modifier, this.definition.methods.global[methodName].key];
-                if (this.definition.methods.global[methodName].pass) {
-                    const passedArgs = this.definition.methods.global[methodName].pass.apply(this.scoped, originalArgs);
-                    mergedArgs = mergedArgs.concat(passedArgs);
-                    this.root.executeModifier.apply(this.root, mergedArgs);
-                }
-                else {
-                    mergedArgs = mergedArgs.concat(originalArgs);
-                    this.root.executeModifier.apply(this.root, mergedArgs);
-                }
-            }.bind(this);
-        }
+        this.buildGlobalMethods();
 
         this.scoped.setProps = (props, silent) => {
             const changedProps = changes.setChanges(this.scoped.props.local, props, silent, true);
@@ -177,15 +156,43 @@ export default class ComponentState {
                 this.component.onStateChange(changedProps);
             }
         };
+        this.scoped.setGlobalProps = (props) => {
+            for(let prop in props) {
+                const globalDef = props[prop];
+                let isPreviouslyDefined = this.definition.props.global[prop];
+                let isInvalidDefinition = globalDef === null || typeof globalDef !== 'object';
+                let newGlobalProps = {};
+                if(isInvalidDefinition && isPreviouslyDefined) {
+                    delete this.definition.props.global[prop];
+                }
+                else if(!isInvalidDefinition) {
+                    this.definition.props.global[prop] = newGlobalProps[prop] = props[prop];
+                }
+                this.component.mapItem.setSelfGlobal(newGlobalProps);
+                this.updateGlobalProps();
+            }
+        };
+        this.scoped.setGlobalMethods = (props) => {
+            for(let prop in props) {
+                const globalDef = props[prop];
+                let isPreviouslyDefined = this.definition.methods.global[prop];
+                let isInvalidDefinition = globalDef === null || typeof globalDef !== 'object';
+                if(isInvalidDefinition && isPreviouslyDefined) {
+                    delete this.definition.methods.global[prop];
+                }
+                else if(!isInvalidDefinition) {
+                    this.definition.methods.global[prop] = props[prop];
+                }
+                this.buildGlobalMethods();
+            }
+        };
 
         this.scoped.getProps = () => this.getProps();
         this.scoped.getMethods = () => this.getMethods();
 
         this.scoped.router = this.root.router;
-        this.scoped.execute = this.root.executeModifier.bind(this.root);
-        this.scoped.id = component.scoped.id;
+        this.scoped.id = this.component.scoped.id;
 
-        this.component = component;
 
         this.reference = Object.assign({}, defaultSegregation);
         this.bindings = {};
@@ -327,6 +334,24 @@ export default class ComponentState {
         }
     }
 
+    buildGlobalMethods() {
+        for (let methodName in this.definition.methods.global) {
+            this.scoped.methods.global[methodName] = function () {
+                const originalArgs = [].slice.call(arguments);
+                let mergedArgs = [this.definition.methods.global[methodName].modifier, this.definition.methods.global[methodName].key];
+                if (this.definition.methods.global[methodName].pass) {
+                    const passedArgs = this.definition.methods.global[methodName].pass.apply(this.scoped, originalArgs);
+                    mergedArgs = mergedArgs.concat(passedArgs);
+                    this.root.executeModifier.apply(this.root, mergedArgs);
+                }
+                else {
+                    mergedArgs = mergedArgs.concat(originalArgs);
+                    this.root.executeModifier.apply(this.root, mergedArgs);
+                }
+            }.bind(this);
+        }
+    }
+
     /**
      * sets state external properties and methods
      */
@@ -386,7 +411,10 @@ export default class ComponentState {
         path = path.join('.');
 
         if (externalReferences.parent.reference.global.hasOwnProperty(stateKey)) {
-            externalReferences.global[key] = externalReferences.parent.reference.global[item.value];
+            externalReferences.global[key] = externalReferences.parent.reference.global[stateKey];
+            if(path) {
+                externalReferences.global[key].key += '.' + path;
+            }
         }
         else if (externalReferences.parent.reference.external.hasOwnProperty(stateKey)) {
             externalReferences.external[key] = externalReferences.parent.reference.external[item.value];

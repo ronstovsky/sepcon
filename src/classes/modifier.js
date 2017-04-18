@@ -31,6 +31,8 @@ export default class Modifier {
             return this.root.datas[data].getProps(propsMap);
         };
 
+        this.scoped.modify = this.root.executeModifier.bind(this.root);
+
         this.scoped.router = this.root.router;
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);

@@ -8,25 +8,18 @@ function formatGlobals(global) {
         const prop = global[_prop];
         const data = prop.data; //data
         const key = prop.key; //key
-        globals[data] = key;
+        if(!globals[data]) {
+            globals[data] = [];
+        }
+        globals[data].push(key);
     }
     return globals;
 }
 function isGlobalChanged(global, data, changed) {
     if(global && global[data]) {
         for(let i=0,e=changed.length;i<e;i++) {
-            if(global[data] === changed[i]) {
+            if(global[data].indexOf(changed[i]) >= 0) {
                 return true;
-            }
-            else if(global[data] && changed[i].indexOf('.') > 0) {
-                let partial = changed[i];
-                do {
-                    partial = partial.substr(0, partial.lastIndexOf('.'));
-                    if(partial.indexOf(global[data]) === 0) {
-                        return true;
-                    }
-                }
-                while(partial.indexOf('.') > -1);
             }
         }
     }
@@ -39,6 +32,9 @@ class ComponentItem {
         this.parent = null;
         this.definition = null;
         this.component = component;
+        this.selfGlobal = {};
+        this.refGlobal = {};
+
         this.setElement(element);
         this.extractElementData();
     }
@@ -73,16 +69,20 @@ class ComponentItem {
         this.external.props = props ? JSON.parse(props) : null;
         this.external.methods = methods ? JSON.parse(methods) : null;
     }
-    updateAfterComponentInit() {
-        this.global = formatGlobals(this.component.state.reference.global);
+    setSelfGlobal(globals) {
+        this.selfGlobal = formatGlobals(globals);
+    }
+    setRefGlobal() {
+        this.refGlobal = formatGlobals(this.component.state.reference.global);
     }
     checkChanged(data, changed) {
         this.changed = false;
         if(this.definition.changed) {
             this.changed = true;
         }
-        else if(Object.keys(this.global).length > 0) {
-            this.changed =  isGlobalChanged(this.global, data, changed);
+        else if(Object.keys(this.refGlobal).length > 0 || Object.keys(this.selfGlobal).length > 0) {
+            const globalsToCheck = Object.assign({}, this.selfGlobal, this.refGlobal);
+            this.changed =  isGlobalChanged(globalsToCheck, data, changed);
         }
         return this.changed;
     }
