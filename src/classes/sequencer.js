@@ -12,16 +12,11 @@ export default class {
         this.seq = this.config[sequence];
 
         let promise = Promise;
-        //this.handleSequenceStep('pre') && this.handleSequenceStep(false) && this.handleSequenceStep('post');
         if(this.handleSequenceStep('pre')) {
             promise.resolve().then(()=> {
                 if (this.handleSequenceStep(false)) {
                     window.requestAnimationFrame(()=> {
-                        //Promise.resolve()
-                        //    .then(()=> {
-                                //post hooks will be executed before next frame
-                                this.handleSequenceStep('post');
-                            //});
+                        this.handleSequenceStep('post');
                     });
                 }
             });

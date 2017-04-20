@@ -9,6 +9,7 @@ import Router from './classes/router';
 import Logs from './classes/logs';
 import common from './shared/utils.common';
 import { ComponentItem, ComponentDefinitionItem } from './classes/component.mapping.js';
+import { ModifierItem } from './classes/modifier.mapping.js';
 
 import { DATA_CHANGED, ADD_COMPONENT } from './shared/constants';
 
@@ -35,6 +36,7 @@ export default class Root {
         this.components = [];
         this.componentsDefinition = [];
         this.componentElements = [];
+        this.modifiersDefinition = [];
         this.router = router;
         this.logs = new Logs();
 
@@ -96,8 +98,14 @@ export default class Root {
         this.componentElements.forEach((item) => {
             if(item.element.component.active) {
                 if (item.checkChanged(data, Object.keys(changed))) {
-                    item.element.component.onGlobalStateChange(changed);
+                    item.element.component.onGlobalStateChange(data, changed);
                 }
+            }
+        });
+
+        this.modifiersDefinition.forEach((item) => {
+            if (item.checkChanged(data, Object.keys(changed))) {
+                item.modifier.onGlobalStateChange(data, changed);
             }
         });
     }
@@ -147,5 +155,9 @@ export default class Root {
         }
         componentItem.setDefinition(this.componentsDefinition[componentItem.tag.toLowerCase()]);
         return componentItem;
+    }
+
+    addModifier(modifier) {
+        this.modifiersDefinition.push(new ModifierItem(modifier));
     }
 }

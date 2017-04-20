@@ -16,6 +16,7 @@ export default class Component {
         this.scoped.children = element.originalChildren;
         this.scoped.element = element;
         this.scoped.id = element.getAttribute(TAG_IDENTIFIER);
+        this.scoped.bindEvents = () => this.bindEvents();
 
         delete this.scoped.state;
         if(this.scoped.super) {
@@ -27,6 +28,8 @@ export default class Component {
         this.state = new this.root.classes.ComponentState(componentDefinition.state, this, this.root);
         this.sequencer = new this.root.classes.Sequencer(this, this.root.sequencerConfig);
 
+        this.collectedDataChanges = {};
+        this.timer = null;
 
         this.mapItem = this.root.addComponent(this, element, parentElement);
     }
@@ -119,7 +122,7 @@ export default class Component {
         this.state.addRoutes();
         const localChanged = changes.setChanges(this.componentPrevProps, this.scoped.props);
         if (Object.keys(localChanged).length > 0 || isInitialHTMLChanged) {
-            this.sequencer.startSequence('externalChange', localChanged);
+            this.sequencer.startSequence('externalChange', [localChanged]);
         }
     }
 
@@ -136,17 +139,26 @@ export default class Component {
     }
 
     onStateChange(changed) {
-        this.sequencer.startSequence('localChange', changed);
+        this.sequencer.startSequence('localChange', [changed]);
     }
 
     onReferenceChange(changed) {
         const localChanged = this.state.getReferenceStatePropNames(changed);
-        this.sequencer.startSequence('referenceChange', localChanged);
+        this.sequencer.startSequence('referenceChange', [localChanged]);
     }
 
-    onGlobalStateChange(changed) {
-        const localChanged = this.state.getGlobalStatePropNames(changed);
-        this.sequencer.startSequence('globalChange', localChanged);
+    onGlobalStateChange(data, changed) {
+        const localChanged = this.state.getGlobalStatePropNames(data, changed);
+        Object.assign(this.collectedDataChanges, localChanged);
+        clearTimeout(this.timer);
+        this.timer = setTimeout(()=>{
+            this.debounceGlobalStateChange();
+        }, 10);
+    }
+    debounceGlobalStateChange() {
+        this.sequencer.startSequence('globalChange', [this.collectedDataChanges]);
+        this.timer = null;
+        this.collectedDataChanges = {};
     }
 
     onRender(html) {

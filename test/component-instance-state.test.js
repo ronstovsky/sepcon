@@ -186,4 +186,33 @@ describe('Component Unit', ()=>{
         DIV.innerHTML = parent.createTag().render();
         document.getElementById('ui-tests').appendChild(DIV);
     });
+
+
+    it('should update own state on change', (done) => {
+        const parent = scope.createComponent({
+            id: 'test-'+testNum,
+            component: {
+                state: {
+                    props: {
+                        local: {
+                            prop: 1
+                        }
+                    },
+                    mount() {
+                        this.setProps({prop: 2});
+                    }
+                },
+                render(changed) {
+                    if(changed) {
+                        console.log('123');
+                        expect(this.props.prop).to.be.equal(2);
+                        done();
+                    }
+                }
+            }
+        });
+        let DIV = document.createElement('div');
+        DIV.innerHTML = parent.createTag().render();
+        document.getElementById('ui-tests').appendChild(DIV);
+    });
 });

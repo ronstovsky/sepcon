@@ -1,5 +1,6 @@
 import common from '../shared/utils.common';
 
+
 export default class Modifier {
     constructor(def, root) {
         let definition = def.modifier;
@@ -8,9 +9,13 @@ export default class Modifier {
             definition.super = def.extend;
         }
         this.definition = definition;
+        this.id = def.id;
         this.root = root;
         this.scoped = common.clone(definition);
         this.debounced = {};
+
+        this.timer = null;
+        this.collectedDataChanges = {};
 
         for (let methodName in this.scoped.methods) {
             this.scoped.methods[methodName] = this.scoped.methods[methodName].bind(this.scoped);
@@ -35,6 +40,8 @@ export default class Modifier {
 
         this.scoped.router = this.root.router;
 
+        this.mapItem = this.root.addModifier(this);
+
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
         this.sequencer.startSequence('mountModifier');
     }
@@ -58,5 +65,39 @@ export default class Modifier {
         if (this.definition.routes) {
             this.definition.routes.forEach(i => this.root.router.add(i, this.scoped));
         }
+    }
+
+    getGlobalStatePropName(data, originalProp) {
+        const globals = this.definition.props;
+        for (let prop in globals) {
+            if (globals[prop].key === originalProp && globals[prop].data === data) {
+                return prop;
+            }
+        }
+        return false;
+    }
+    getGlobalStatePropNames(data, props) {
+        let localMap = {};
+        for (let prop in props) {
+            const localProp = this.getGlobalStatePropName(data, prop);
+            if (localProp) {
+                localMap[localProp] = props[prop];
+            }
+        }
+        return localMap;
+    }
+    onGlobalStateChange(data, changed) {
+        const localChanged = this.getGlobalStatePropNames(data, changed);
+        Object.assign(this.collectedDataChanges, localChanged);
+        clearTimeout(this.timer);
+        this.timer = setTimeout(()=>{
+            this.debounceGlobalStateChange();
+        }, 10);
+    }
+
+    debounceGlobalStateChange() {
+        this.timer = null;
+        this.sequencer.startSequence('globalChangeModifier', [this.collectedDataChanges]);
+        this.collectedDataChanges = {};
     }
 }

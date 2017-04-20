@@ -1,30 +1,5 @@
 import { TAG_IDENTIFIER, TAG_PROPERTIES, TAG_METHODS } from './../shared/constants';
-
-function formatGlobals(global) {
-    let globals = {};
-    if(!global) return globals;
-
-    for(let _prop in global) {
-        const prop = global[_prop];
-        const data = prop.data; //data
-        const key = prop.key; //key
-        if(!globals[data]) {
-            globals[data] = [];
-        }
-        globals[data].push(key);
-    }
-    return globals;
-}
-function isGlobalChanged(global, data, changed) {
-    if(global && global[data]) {
-        for(let i=0,e=changed.length;i<e;i++) {
-            if(global[data].indexOf(changed[i]) >= 0) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
+import mappingChanges from './../shared/utils.mapping.changes';
 
 class ComponentItem {
     constructor(component, element) {
@@ -70,10 +45,10 @@ class ComponentItem {
         this.external.methods = methods ? JSON.parse(methods) : null;
     }
     setSelfGlobal(globals) {
-        this.selfGlobal = formatGlobals(globals);
+        this.selfGlobal = mappingChanges.formatGlobals(globals);
     }
     setRefGlobal() {
-        this.refGlobal = formatGlobals(this.component.state.reference.global);
+        this.refGlobal = mappingChanges.formatGlobals(this.component.state.reference.global);
     }
     checkChanged(data, changed) {
         this.changed = false;
@@ -82,7 +57,7 @@ class ComponentItem {
         }
         else if(Object.keys(this.refGlobal).length > 0 || Object.keys(this.selfGlobal).length > 0) {
             const globalsToCheck = Object.assign({}, this.selfGlobal, this.refGlobal);
-            this.changed =  isGlobalChanged(globalsToCheck, data, changed);
+            this.changed =  mappingChanges.isGlobalChanged(globalsToCheck, data, changed);
         }
         return this.changed;
     }
@@ -92,11 +67,11 @@ class ComponentDefinitionItem {
     constructor(definition) {
         this.definition = definition;
         if(definition.state && definition.state.props && definition.state.props.global) {
-            this.global = formatGlobals(definition.state.props.global);
+            this.global = mappingChanges.formatGlobals(definition.state.props.global);
         }
     }
     checkChanged(data, changed) {
-        this.changed = isGlobalChanged(this.global, data, changed);
+        this.changed = mappingChanges.isGlobalChanged(this.global, data, changed);
         return this.changed;
     }
 }

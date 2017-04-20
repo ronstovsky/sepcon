@@ -10,18 +10,51 @@ function create(def, type, defs, cls) {
             title: { content: `Tried To Create A Definition With Existing Id`},
             rows: [
                 { style: 'label', content: 'Object Type' },
-                { style: 'code', content: type},
-                { style: 'label', content: 'Existing Id' },
-                { style: 'code', content: definition.id},
+                { style: 'code', content: type },
+                { style: 'label', content: 'Definition Id' },
+                { style: 'code', content: definition.id },
             ]
         });
         return false;
     }
     else {
         if(definition.extend) {
-            definition.extend = defs[definition.extend].definition;
+            if(!defs[definition.extend]) {
+                this.root.logs.print({
+                    title: { content: `Tried To Extend A Non-Existing Definition`},
+                    rows: [
+                        { style: 'label', content: 'Object Type' },
+                        { style: 'code', content: type},
+                        { style: 'label', content: 'Definition Id' },
+                        { style: 'code', content: definition.id },
+                        { style: 'label', content: 'Extended Id' },
+                        { style: 'code', content: definition.extend },
+                    ]
+                });
+            }
+            else {
+                definition.extend = defs[definition.extend].definition;
+            }
         }
         if(definition.decorators) {
+
+            definition.decorators = definition.decorators.filter(dec => {
+                if(!defs[dec]) {
+                    this.root.logs.print({
+                        title: { content: `Tried To Decorate A Definition With a Non-Existing One`},
+                        rows: [
+                            { style: 'label', content: 'Object Type' },
+                            { style: 'code', content: type },
+                            { style: 'label', content: 'Definition Id' },
+                            { style: 'code', content: definition.id },
+                            { style: 'label', content: 'Decorator Id' },
+                            { style: 'code', content: dec },
+                        ]
+                    });
+                    return false;
+                }
+                return true;
+            });
             definition.decorators = definition.decorators.map(dec => common.clone(defs[dec].definition));
         }
         defs[definition.id] = new cls(definition, this.root);

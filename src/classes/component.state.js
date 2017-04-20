@@ -245,23 +245,27 @@ export default class ComponentState {
         return null;
     }
 
-    getGlobalStatePropName(originalProp) {
+    getGlobalStatePropName(data, originalProp) {
         const globals = this.getGlobalDef();
         for (let prop in globals) {
-            if (globals[prop].key === originalProp) {
+            if (globals[prop].key === originalProp && globals[prop].data === data) {
                 return prop;
             }
         }
     }
 
-    getGlobalStatePropNames(props) {
+    getGlobalStatePropNames(data, props) {
         let localMap = {};
         for (let prop in props) {
-            const localProp = this.getGlobalStatePropName(prop);
+            const localProp = this.getGlobalStatePropName(data, prop);
             if (localProp !== undefined) localMap[localProp] = props[prop];
         }
         return localMap;
     }
+
+
+
+
 
     getReferenceStatePropName(originalProp) {
         const segs = ['global', 'external' ,'local'];

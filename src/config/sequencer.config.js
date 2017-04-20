@@ -1,47 +1,47 @@
 export default {
-mount: {
-    send: function(step, hook) {
-        if(step.target === 'state') {
-            if(hook === 'pre') {
-                this.base.state.addRoutes();
+    mount: {
+        send: function (step, hook) {
+            if (step.target === 'state') {
+                if (hook === 'pre') {
+                    this.base.state.addRoutes();
+                }
             }
-        }
-        else {
-            this.base.updateState();
-        }
-        return [this.params];
-    },
-    retrieve: function(step, hook, res) {
-        if(step.target === 'component') {
-            this.base.onRender(res);
-        }
-    },
-    sequence: [
-        {
-            target: 'state',
-            action: 'mount'
+            else {
+                this.base.updateState();
+            }
+            return this.params;
         },
-        {
-            target: 'component',
-            action: 'render'
+        retrieve: function (step, hook, res) {
+            if (step.target === 'component') {
+                this.base.onRender(res);
+            }
         },
-    ]
-},
+        sequence: [
+            {
+                target: 'state',
+                action: 'mount'
+            },
+            {
+                target: 'component',
+                action: 'render'
+            },
+        ]
+    },
     localChange: {
-        send: function(step, hook) {
-            if(step.target === 'state') {
-                if(hook === false) {
-                    this.base.state.updateLocalProps(this.params);
+        send: function (step, hook) {
+            if (step.target === 'state') {
+                if (hook === false) {
+                    this.base.state.updateLocalProps(this.params[0]);
                     this.base.updateState();
                 }
             }
             else {
                 this.base.updateState();
             }
-            return [this.params];
+            return this.params;
         },
-        retrieve: function(step, hook, res) {
-            if(step.target === 'component') {
+        retrieve: function (step, hook, res) {
+            if (step.target === 'component') {
                 this.base.onRender(res);
             }
         },
@@ -57,14 +57,14 @@ mount: {
         ]
     },
     externalChange: {
-        send: function(step, hook) {
-            if(step.target === 'component') {
+        send: function (step, hook) {
+            if (step.target === 'component') {
                 this.base.updateState();
             }
-            return [this.params];
+            return this.params;
         },
-        retrieve: function(step, hook, res) {
-            if(step.target === 'component') {
+        retrieve: function (step, hook, res) {
+            if (step.target === 'component') {
                 this.base.onRender(res);
             }
         },
@@ -80,9 +80,9 @@ mount: {
         ]
     },
     globalChange: {
-        send: function(step, hook) {
-            if(step.target === 'state') {
-                if(hook === false) {
+        send: function (step, hook) {
+            if (step.target === 'state') {
+                if (hook === false) {
                     this.base.state.updateGlobalProps();
                     this.base.updateState();
                 }
@@ -90,10 +90,10 @@ mount: {
             else {
                 this.base.updateState();
             }
-            return [this.params];
+            return this.params;
         },
-        retrieve: function(step, hook, res) {
-            if(step.target === 'component') {
+        retrieve: function (step, hook, res) {
+            if (step.target === 'component') {
                 this.base.onRender(res);
             }
         },
@@ -109,19 +109,19 @@ mount: {
         ]
     },
     referenceChange: {
-        send: function(step, hook) {
-            if(step.target === 'state') {
-                if(hook === false) {
+        send: function (step, hook) {
+            if (step.target === 'state') {
+                if (hook === false) {
                     this.base.state.updateReferencedProps();
                 }
             }
             else {
                 this.base.updateState();
             }
-            return [this.params];
+            return this.params;
         },
-        retrieve: function(step, hook, res) {
-            if(step.target === 'component') {
+        retrieve: function (step, hook, res) {
+            if (step.target === 'component') {
                 this.base.onRender(res);
             }
         },
@@ -138,10 +138,10 @@ mount: {
     },
 
     destroy: {
-        send: function(step, hook) {
+        send: function (step, hook) {
             return [];
         },
-        retrieve: function(step, hook, res) {
+        retrieve: function (step, hook, res) {
 
         },
         sequence: [
@@ -157,11 +157,11 @@ mount: {
     },
 
     mountModifier: {
-        send: function(step, hook) {
-            if(hook === 'pre') {
+        send: function (step, hook) {
+            if (hook === 'pre') {
                 this.base.addRoutes();
             }
-            return [this.params];
+            return this.params;
         },
         sequence: [
             {
@@ -169,5 +169,13 @@ mount: {
                 action: 'mount'
             }
         ]
-    }
+    },
+    globalChangeModifier: {
+        sequence: [
+            {
+                target: 'modifier',
+                action: 'change'
+            }
+        ]
+    },
 };
