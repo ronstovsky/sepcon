@@ -79,6 +79,9 @@ class SepConClass {
     createModifier(def) {
         return create.call(this, def, 'modifier', this.root.modifiers, this.root.classes.Modifier);
     }
+    createService(def) {
+        return create.call(this, def, 'service', this.root.services, this.root.classes.Service);
+    }
     createComponent(def) {
         create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
         return {

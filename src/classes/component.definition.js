@@ -147,7 +147,7 @@ export default class ComponentDefinition {
                     if(!common.isInDome(this)) return false;
                     if(common.isDeepNestedInSameComponent(this)) {
                         root.logs.print({
-                            title: { content: 'Components Cannot Be Nested Inside Themselves' },
+                            title: { content: 'WARNING - A Component Is Nested Inside Itself' },
                             rows: [
                                 { style: 'label', content: 'Components Path' },
                                 { style: 'code', content: common.getComponentElementsPath(this, true, true) },
@@ -155,7 +155,7 @@ export default class ComponentDefinition {
                                 { content: this }
                             ]
                         });
-                        return false;
+                        //return false;
                     }
                     const parent = common.getParentComponentElement(this);
                     this._componentElement = {

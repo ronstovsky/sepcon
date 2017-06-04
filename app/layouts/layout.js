@@ -16,7 +16,7 @@ export default SepCon.createComponent({
                         key: 'currentPage'
                     }
                 }
-            },
+            }
         },
         render() {
             if (!this.props.page) {
@@ -43,6 +43,9 @@ export default SepCon.createComponent({
                     break;
             }
             return `${header.render()}${navbar.render()}${html}`;
+        },
+        descendantChange(component) {
+            console.log('layout descendantChange', component);
         }
     }
 });

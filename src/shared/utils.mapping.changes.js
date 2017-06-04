@@ -6,7 +6,7 @@ export default {
         for(let _prop in global) {
             const prop = global[_prop];
             const data = prop.data; //data
-            const key = prop.key; //key
+            const key = prop.key || true; //key
             if(!globals[data]) {
                 globals[data] = [];
             }
@@ -17,6 +17,9 @@ export default {
 
     isGlobalChanged(global, data, changed) {
         if(global && global[data]) {
+            if(global[data].indexOf(true) >= 0) {
+                return true;
+            }
             for(let i=0,e=changed.length;i<e;i++) {
                 if(global[data].indexOf(changed[i]) >= 0) {
                     return true;

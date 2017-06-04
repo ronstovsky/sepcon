@@ -38,24 +38,26 @@ export default class Data {
         return map;
     }
     getProp(prop) {
-        const props = prop.split('.');
         let value = this.data;
-        for(let i=0,e=props.length;i<e;i++){
-            if(value[props[i]] === undefined) {
-                this.root.logs.print({
-                    title: { content: `Could Not Find a Requested Data Property` },
-                    rows: [
-                        { style: 'label', content: 'Data Id' },
-                        { style: 'code', content: this.definition.id },
-                        { style: 'label', content: 'Properties Path' },
-                        { style: 'code', content: prop },
-                        { style: 'label', content: 'Data (snapshot)' },
-                        { style: 'code', content: common.clone(this.data) },
-                    ]
-                });
-                return undefined;
+        if(prop) {
+            const props = prop.split('.');
+            for (let i = 0, e = props.length; i < e; i++) {
+                if (value[props[i]] === undefined) {
+                    this.root.logs.print({
+                        title: {content: `Could Not Find a Requested Data Property`},
+                        rows: [
+                            {style: 'label', content: 'Data Id'},
+                            {style: 'code', content: this.definition.id},
+                            {style: 'label', content: 'Properties Path'},
+                            {style: 'code', content: prop},
+                            {style: 'label', content: 'Data (snapshot)'},
+                            {style: 'code', content: common.clone(this.data)},
+                        ]
+                    });
+                    return undefined;
+                }
+                value = value[props[i]];
             }
-            value = value[props[i]];
         }
         switch(typeof value) {
             case 'string': case 'number': return value;

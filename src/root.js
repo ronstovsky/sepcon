@@ -79,15 +79,8 @@ export default class Root {
         const originalArgs = [].slice.call(arguments);
         const passedArgs = originalArgs.slice(2);
         if(this.modifiers[modifier] && this.modifiers[modifier].has(key)) {
-            this.modifiers[modifier].stack(key, passedArgs);
+            return this.modifiers[modifier].execute(key, passedArgs);
         }
-        //should execute after current runtime for cases of multiple changes of the same data
-        Promise.resolve().then(()=>{
-            for(let modifier in this.modifiers) {
-                this.modifiers[modifier].execute();
-            }
-        });
-
     }
     changedData(data, changed) {
         if(Object.keys(changed).length === 0) return;

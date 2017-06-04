@@ -7,25 +7,23 @@ export default class {
         this.config = config;
     }
     startSequence(sequence='mount', params=null) {
-        this.params = params;
-        this.sequence = sequence;
-        this.seq = this.config[sequence];
+        const seq = this.config[sequence];
 
         let promise = Promise;
-        if(this.handleSequenceStep('pre')) {
+        if(this.handleSequenceStep('pre', seq, params)) {
             promise.resolve().then(()=> {
-                if (this.handleSequenceStep(false)) {
+                if (this.handleSequenceStep(false, seq, params)) {
                     window.requestAnimationFrame(()=> {
-                        this.handleSequenceStep('post');
+                        this.handleSequenceStep('post', seq, params);
                     });
                 }
             });
         }
     }
-    handleSequenceStep(hook) {
-        for(let i = 0, e = this.seq.sequence.length; i < e; i++){
-            const sequenceStep = this.seq.sequence[i];
-            let params = this.getStepParams(sequenceStep, hook);
+    handleSequenceStep(hook, seq, params) {
+        for(let i = 0, e = seq.sequence.length; i < e; i++){
+            const sequenceStep = seq.sequence[i];
+            params = this.getStepParams(sequenceStep, hook, seq, params);
 
             let target;
             switch(sequenceStep.target) {
@@ -44,20 +42,23 @@ export default class {
                 if(res === false) {
                     return false;
                 }
-                this.handleStepResponse(sequenceStep, hook, res);
+                this.handleStepResponse(sequenceStep, hook, seq, res);
+            }
+            else {
+                this.handleStepResponse(sequenceStep, hook, seq);
             }
         }
         return true;
     }
-    getStepParams(step, hook) {
-        if(this.seq.send) {
-            return this.seq.send.apply(this, [step, hook]);
+    getStepParams(step, hook, seq, params) {
+        if(seq.send) {
+            return seq.send.apply(this, [step, hook, params]);
         }
-        else return this.params;
+        else return params;
     }
-    handleStepResponse(step, hook, res) {
-        if(this.seq.retrieve) {
-            return this.seq.retrieve.apply(this, [step, hook, res]);
+    handleStepResponse(step, hook, seq, res) {
+        if(seq.retrieve) {
+            return seq.retrieve.apply(this, [step, hook, res]);
         }
         else {
             return res;

@@ -9,7 +9,7 @@ export default {
             else {
                 this.base.updateState();
             }
-            return this.params;
+            return [true];
         },
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
@@ -27,22 +27,48 @@ export default {
             },
         ]
     },
-    localChange: {
+    resume: {
+        //retrieve: function (step, hook, res) {
+        //    if (step.target === 'component') {
+        //        this.base.onRender(res);
+        //    }
+        //},
         send: function (step, hook) {
+            if (step.target === 'component') {
+                this.base.updateState();
+            }
+            return [true];
+        },
+        sequence: [
+            {
+                target: 'state',
+                action: 'resume'
+            },
+            {
+                target: 'component',
+                action: 'render'
+            },
+        ]
+    },
+    localChange: {
+        send: function (step, hook, params) {
             if (step.target === 'state') {
                 if (hook === false) {
-                    this.base.state.updateLocalProps(this.params[0]);
+                    this.base.state.updateLocalProps(params[0]);
                     this.base.updateState();
                 }
             }
             else {
                 this.base.updateState();
             }
-            return this.params;
+            return params;
         },
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
                 this.base.onRender(res);
+                if(hook === 'post') {
+                    this.base.onDescendantChange();
+                }
             }
         },
         sequence: [
@@ -57,15 +83,18 @@ export default {
         ]
     },
     externalChange: {
-        send: function (step, hook) {
+        send: function (step, hook, params) {
             if (step.target === 'component') {
                 this.base.updateState();
             }
-            return this.params;
+            return params;
         },
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
                 this.base.onRender(res);
+                if(hook === 'post') {
+                    this.base.onDescendantChange();
+                }
             }
         },
         sequence: [
@@ -80,7 +109,7 @@ export default {
         ]
     },
     globalChange: {
-        send: function (step, hook) {
+        send: function (step, hook, params) {
             if (step.target === 'state') {
                 if (hook === false) {
                     this.base.state.updateGlobalProps();
@@ -90,11 +119,14 @@ export default {
             else {
                 this.base.updateState();
             }
-            return this.params;
+            return params;
         },
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
                 this.base.onRender(res);
+                if(hook === 'post') {
+                    this.base.onDescendantChange();
+                }
             }
         },
         sequence: [
@@ -109,7 +141,7 @@ export default {
         ]
     },
     referenceChange: {
-        send: function (step, hook) {
+        send: function (step, hook, params) {
             if (step.target === 'state') {
                 if (hook === false) {
                     this.base.state.updateReferencedProps();
@@ -118,11 +150,14 @@ export default {
             else {
                 this.base.updateState();
             }
-            return this.params;
+            return params;
         },
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
                 this.base.onRender(res);
+                if(hook === 'post') {
+                    this.base.onDescendantChange();
+                }
             }
         },
         sequence: [
@@ -136,14 +171,16 @@ export default {
             },
         ]
     },
+    descendantChange: {
+        sequence: [
+            {
+                target: 'component',
+                action: 'descendantChange'
+            },
+        ]
+    },
 
     destroy: {
-        send: function (step, hook) {
-            return [];
-        },
-        retrieve: function (step, hook, res) {
-
-        },
         sequence: [
             {
                 target: 'state',
@@ -157,11 +194,11 @@ export default {
     },
 
     mountModifier: {
-        send: function (step, hook) {
+        send: function (step, hook, params) {
             if (hook === 'pre') {
                 this.base.addRoutes();
             }
-            return this.params;
+            return params;
         },
         sequence: [
             {

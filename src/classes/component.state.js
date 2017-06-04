@@ -151,6 +151,7 @@ export default class ComponentState {
             if (Object.keys(changedProps).length > 0) {
                 if (silent) {
                     this.updateLocalProps(changedProps);
+                    this.component.updateState();
                     return;
                 }
                 this.component.onStateChange(changedProps);
@@ -192,7 +193,6 @@ export default class ComponentState {
 
         this.scoped.router = this.root.router;
         this.scoped.id = this.component.scoped.id;
-
 
         this.reference = Object.assign({}, defaultSegregation);
         this.bindings = {};
@@ -248,7 +248,7 @@ export default class ComponentState {
     getGlobalStatePropName(data, originalProp) {
         const globals = this.getGlobalDef();
         for (let prop in globals) {
-            if (globals[prop].key === originalProp && globals[prop].data === data) {
+            if ((!globals[prop].key || globals[prop].key === originalProp) && globals[prop].data === data) {
                 return prop;
             }
         }
@@ -262,9 +262,6 @@ export default class ComponentState {
         }
         return localMap;
     }
-
-
-
 
 
     getReferenceStatePropName(originalProp) {

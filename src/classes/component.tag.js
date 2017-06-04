@@ -10,6 +10,10 @@ export default class ComponentTag {
         this._id = null;
         this._html = null;
     }
+    html(html) {
+        this._html = html;
+        return this;
+    }
     methods(methods) {
         let formedMethods = {};
         for(let key in methods) {

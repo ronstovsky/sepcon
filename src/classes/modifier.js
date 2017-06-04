@@ -12,7 +12,6 @@ export default class Modifier {
         this.id = def.id;
         this.root = root;
         this.scoped = common.clone(definition);
-        this.debounced = {};
 
         this.timer = null;
         this.collectedDataChanges = {};
@@ -46,16 +45,8 @@ export default class Modifier {
         this.sequencer.startSequence('mountModifier');
     }
 
-    //stacking all modifier requests to debounce them
-    stack(method, params) {
-        this.debounced[method] = params;
-    }
-    //execution will iterate over all stacked calls
-    execute() {
-        for(let method in this.debounced) {
-            this.scoped.methods[method].apply(this.scoped, this.debounced[method]);
-        }
-        this.debounced = {};
+    execute(method, params) {
+        return this.scoped.methods[method].apply(this.scoped, params);
     }
     has(id) {
         return !!this.scoped.methods[id];

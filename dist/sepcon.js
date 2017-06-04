@@ -63,7 +63,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _root = __webpack_require__(17);
+	var _root = __webpack_require__(19);
 	
 	var _root2 = _interopRequireDefault(_root);
 	
@@ -78,19 +78,39 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	function create(def, type, defs, cls) {
+	    var _this = this;
+	
 	    var definition = _utils2.default.clone(def);
 	
 	    if (defs[definition.id]) {
 	        this.root.logs.print({
 	            title: { content: 'Tried To Create A Definition With Existing Id' },
-	            rows: [{ style: 'label', content: 'Object Type' }, { style: 'code', content: type }, { style: 'label', content: 'Existing Id' }, { style: 'code', content: definition.id }]
+	            rows: [{ style: 'label', content: 'Object Type' }, { style: 'code', content: type }, { style: 'label', content: 'Definition Id' }, { style: 'code', content: definition.id }]
 	        });
 	        return false;
 	    } else {
 	        if (definition.extend) {
-	            definition.extend = defs[definition.extend].definition;
+	            if (!defs[definition.extend]) {
+	                this.root.logs.print({
+	                    title: { content: 'Tried To Extend A Non-Existing Definition' },
+	                    rows: [{ style: 'label', content: 'Object Type' }, { style: 'code', content: type }, { style: 'label', content: 'Definition Id' }, { style: 'code', content: definition.id }, { style: 'label', content: 'Extended Id' }, { style: 'code', content: definition.extend }]
+	                });
+	            } else {
+	                definition.extend = defs[definition.extend].definition;
+	            }
 	        }
 	        if (definition.decorators) {
+	
+	            definition.decorators = definition.decorators.filter(function (dec) {
+	                if (!defs[dec]) {
+	                    _this.root.logs.print({
+	                        title: { content: 'Tried To Decorate A Definition With a Non-Existing One' },
+	                        rows: [{ style: 'label', content: 'Object Type' }, { style: 'code', content: type }, { style: 'label', content: 'Definition Id' }, { style: 'code', content: definition.id }, { style: 'label', content: 'Decorator Id' }, { style: 'code', content: dec }]
+	                    });
+	                    return false;
+	                }
+	                return true;
+	            });
 	            definition.decorators = definition.decorators.map(function (dec) {
 	                return _utils2.default.clone(defs[dec].definition);
 	            });
@@ -127,13 +147,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'createComponent',
 	        value: function createComponent(def) {
-	            var _this = this;
+	            var _this2 = this;
 	
 	            create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
 	            return {
 	                id: def.id,
 	                createTag: function createTag() {
-	                    return _this.createTag(def.id);
+	                    return _this2.createTag(def.id);
 	                }
 	            };
 	        }
@@ -417,12 +437,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var flatMap = map[prop] ? JSON.stringify(map[prop]) : '';
 	                isDifferent = flatSource !== flatMap;
 	                if (isDifferent) {
-	                    var propPath = path ? path + '.' + prop : prop;
-	                    changedProps[propPath] = this.getChangedAsObject(source[prop], map[prop]);
+	                    if (isShallow) {
+	                        changedProps[prop] = this.getChangedAsObject(source[prop], map[prop]);
+	                    } else {
+	                        var propPath = path ? path + '.' + prop : prop;
+	                        changedProps[propPath] = this.getChangedAsObject(source[prop], map[prop]);
 	
-	                    var changedObject = this.setChanges(source[prop], map[prop], isSourceObject && change, isShallow, propPath, source, prop);
-	                    if (Object.keys(changedObject).length > 0) {
-	                        Object.assign(changedProps, changedObject);
+	                        var changedObject = this.setChanges(source[prop], map[prop], isSourceObject && change, isShallow, propPath, source, prop);
+	                        if (Object.keys(changedObject).length > 0) {
+	                            Object.assign(changedProps, changedObject);
+	                        }
 	                    }
 	                }
 	            } else {
@@ -470,7 +494,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	__webpack_require__(18);
+	__webpack_require__(20);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -587,16 +611,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.seq = this.config[sequence];
 	
 	            var promise = Promise;
-	            //this.handleSequenceStep('pre') && this.handleSequenceStep(false) && this.handleSequenceStep('post');
 	            if (this.handleSequenceStep('pre')) {
 	                promise.resolve().then(function () {
 	                    if (_this.handleSequenceStep(false)) {
 	                        window.requestAnimationFrame(function () {
-	                            //Promise.resolve()
-	                            //    .then(()=> {
-	                            //post hooks will be executed before next frame
 	                            _this.handleSequenceStep('post');
-	                            //});
 	                        });
 	                    }
 	                });
@@ -627,6 +646,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        return false;
 	                    }
 	                    this.handleStepResponse(sequenceStep, hook, res);
+	                } else {
+	                    this.handleStepResponse(sequenceStep, hook);
 	                }
 	            }
 	            return true;
@@ -689,6 +710,43 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 7 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.default = {
+	    formatGlobals: function formatGlobals(global) {
+	        var globals = {};
+	        if (!global) return globals;
+	
+	        for (var _prop in global) {
+	            var prop = global[_prop];
+	            var data = prop.data; //data
+	            var key = prop.key; //key
+	            if (!globals[data]) {
+	                globals[data] = [];
+	            }
+	            globals[data].push(key);
+	        }
+	        return globals;
+	    },
+	    isGlobalChanged: function isGlobalChanged(global, data, changed) {
+	        if (global && global[data]) {
+	            for (var i = 0, e = changed.length; i < e; i++) {
+	                if (global[data].indexOf(changed[i]) >= 0) {
+	                    return true;
+	                }
+	            }
+	        }
+	        return false;
+	    }
+	};
+
+/***/ },
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -703,7 +761,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _utils2 = _interopRequireDefault(_utils);
 	
-	__webpack_require__(19);
+	__webpack_require__(21);
 	
 	var _constants = __webpack_require__(1);
 	
@@ -964,7 +1022,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = ComponentDefinition;
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -972,6 +1030,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
@@ -996,6 +1056,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	// will return a wrapped component with the framework's integration layer
 	var Component = function () {
 	    function Component(componentDefinition, root, element, parent, parentElement) {
+	        var _this = this;
+	
 	        _classCallCheck(this, Component);
 	
 	        this.root = root;
@@ -1007,6 +1069,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.scoped.children = element.originalChildren;
 	        this.scoped.element = element;
 	        this.scoped.id = element.getAttribute(_constants.TAG_IDENTIFIER);
+	        this.scoped.bindEvents = function () {
+	            return _this.bindEvents();
+	        };
 	
 	        delete this.scoped.state;
 	        if (this.scoped.super) {
@@ -1018,13 +1083,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.state = new this.root.classes.ComponentState(componentDefinition.state, this, this.root);
 	        this.sequencer = new this.root.classes.Sequencer(this, this.root.sequencerConfig);
 	
+	        this.collectedDataChanges = {};
+	        this.timer = null;
+	
 	        this.mapItem = this.root.addComponent(this, element, parentElement);
 	    }
 	
 	    _createClass(Component, [{
 	        key: 'bindEvents',
 	        value: function bindEvents() {
-	            var _this = this;
+	            var _this2 = this;
 	
 	            if (!this.scoped.events) return;
 	            if (this.scoped.isInitiatedEvents) {
@@ -1033,33 +1101,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            this.scoped.events.forEach(function (evObj) {
 	                //getting the target - selector or the whole element
-	                var _target = evObj.selector ? _this.scoped.element.querySelectorAll(evObj.selector) : _this.scoped.element;
-	                if (!_this.validateEvents(_target, evObj, true)) {
+	                var _target = evObj.selector ? _this2.scoped.element.querySelectorAll(evObj.selector) : _this2.scoped.element;
+	                if (!_this2.validateEvents(_target, evObj, true)) {
 	                    return;
 	                }
 	                //storing callbacks in a map to keep reference for later unbinding on demand
-	                _this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback] = _this.scoped[evObj.callback].bind(_this.scoped);
-	                _target.forEach(function (trg) {
-	                    trg.addEventListener(evObj.event, _this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
-	                });
+	                _this2._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback] = _this2.scoped[evObj.callback].bind(_this2.scoped);
+	                for (var i in _target) {
+	                    var trg = _target[i];
+	                    if ((typeof trg === 'undefined' ? 'undefined' : _typeof(trg)) === 'object' && trg !== null) {
+	                        trg.addEventListener(evObj.event, _this2._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
+	                    }
+	                }
 	            });
 	            this.scoped.isInitiatedEvents = true;
 	        }
 	    }, {
 	        key: 'unbindEvents',
 	        value: function unbindEvents() {
-	            var _this2 = this;
+	            var _this3 = this;
 	
 	            if (!this.scoped.events || !this.scoped.isInitiatedEvents) return;
 	
 	            this.scoped.events.forEach(function (evObj) {
 	                //getting the target - selector or the whole element
-	                var _target = evObj.selector ? _this2.scoped.element.querySelector(evObj.selector) : _this2.scoped.element;
-	                if (!_this2.validateEvents(_target, evObj)) {
+	                var _target = evObj.selector ? _this3.scoped.element.querySelector(evObj.selector) : _this3.scoped.element;
+	                if (!_this3.validateEvents(_target, evObj)) {
 	                    return;
 	                }
 	                //using the eventsCallback map for live reference for removing it on demand
-	                _target.removeEventListener(evObj.event, _this2._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
+	                _target.removeEventListener(evObj.event, _this3._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
 	            });
 	            this.scoped.isInitiatedEvents = false;
 	        }
@@ -1104,7 +1175,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return;
 	            }
 	            this.setStateData();
-	            this.updateState();
+	            //this.updateState();
 	            var isInitialHTMLChanged = this.scoped.html != this.scoped.element.originalInnerHTML;
 	            this.scoped.html = this.scoped.element.originalInnerHTML;
 	            this.scoped.children = this.scoped.element.originalChildren;
@@ -1113,7 +1184,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.state.addRoutes();
 	            var localChanged = _utils4.default.setChanges(this.componentPrevProps, this.scoped.props);
 	            if (Object.keys(localChanged).length > 0 || isInitialHTMLChanged) {
-	                this.sequencer.startSequence('externalChange', localChanged);
+	                this.sequencer.startSequence('externalChange', [localChanged]);
+	            } else {
+	                this.sequencer.startSequence('resume');
 	            }
 	        }
 	    }, {
@@ -1128,24 +1201,48 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.state.setExternals();
 	            this.state.updateReferencedProps();
 	            this.state.updateGlobalProps();
-	            this.mapItem.updateAfterComponentInit();
+	            this.mapItem.setRefGlobal();
 	        }
 	    }, {
 	        key: 'onStateChange',
 	        value: function onStateChange(changed) {
-	            this.sequencer.startSequence('localChange', changed);
+	            this.sequencer.startSequence('localChange', [changed]);
 	        }
 	    }, {
 	        key: 'onReferenceChange',
 	        value: function onReferenceChange(changed) {
 	            var localChanged = this.state.getReferenceStatePropNames(changed);
-	            this.sequencer.startSequence('referenceChange', localChanged);
+	            this.sequencer.startSequence('referenceChange', [localChanged]);
 	        }
 	    }, {
 	        key: 'onGlobalStateChange',
-	        value: function onGlobalStateChange(changed) {
-	            var localChanged = this.state.getGlobalStatePropNames(changed);
-	            this.sequencer.startSequence('globalChange', localChanged);
+	        value: function onGlobalStateChange(data, changed) {
+	            var _this4 = this;
+	
+	            var localChanged = this.state.getGlobalStatePropNames(data, changed);
+	            Object.assign(this.collectedDataChanges, localChanged);
+	            clearTimeout(this.timer);
+	            this.timer = setTimeout(function () {
+	                _this4.debounceGlobalStateChange();
+	            }, 10);
+	        }
+	    }, {
+	        key: 'debounceGlobalStateChange',
+	        value: function debounceGlobalStateChange() {
+	            this.sequencer.startSequence('globalChange', [this.collectedDataChanges]);
+	            this.timer = null;
+	            this.collectedDataChanges = {};
+	        }
+	    }, {
+	        key: 'onDescendantChange',
+	        value: function onDescendantChange(component) {
+	            var comp = component || this;
+	            if (component) {
+	                this.sequencer.startSequence('descendantChange', [component.scoped]);
+	            }
+	            if (this.mapItem.parent) {
+	                this.mapItem.parent.component.onDescendantChange(comp);
+	            }
 	        }
 	    }, {
 	        key: 'onRender',
@@ -1175,7 +1272,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Component;
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1189,38 +1286,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _constants = __webpack_require__(1);
 	
+	var _utilsMapping = __webpack_require__(7);
+	
+	var _utilsMapping2 = _interopRequireDefault(_utilsMapping);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	function formatGlobals(global) {
-	    var globals = {};
-	    if (!global) return globals;
-	
-	    for (var _prop in global) {
-	        var prop = global[_prop];
-	        var data = prop.data; //data
-	        var key = prop.key; //key
-	        globals[data] = key;
-	    }
-	    return globals;
-	}
-	function isGlobalChanged(global, data, changed) {
-	    if (global && global[data]) {
-	        for (var i = 0, e = changed.length; i < e; i++) {
-	            if (global[data] === changed[i]) {
-	                return true;
-	            } else if (global[data] && changed[i].indexOf('.') > 0) {
-	                var partial = changed[i];
-	                do {
-	                    partial = partial.substr(0, partial.lastIndexOf('.'));
-	                    if (partial.indexOf(global[data]) === 0) {
-	                        return true;
-	                    }
-	                } while (partial.indexOf('.') > -1);
-	            }
-	        }
-	    }
-	    return false;
-	}
 	
 	var ComponentItem = function () {
 	    function ComponentItem(component, element) {
@@ -1230,6 +1302,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.parent = null;
 	        this.definition = null;
 	        this.component = component;
+	        this.selfGlobal = {};
+	        this.refGlobal = {};
+	
 	        this.setElement(element);
 	        this.extractElementData();
 	    }
@@ -1276,9 +1351,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.external.methods = methods ? JSON.parse(methods) : null;
 	        }
 	    }, {
-	        key: 'updateAfterComponentInit',
-	        value: function updateAfterComponentInit() {
-	            this.global = formatGlobals(this.component.state.reference.global);
+	        key: 'setSelfGlobal',
+	        value: function setSelfGlobal(globals) {
+	            this.selfGlobal = _utilsMapping2.default.formatGlobals(globals);
+	        }
+	    }, {
+	        key: 'setRefGlobal',
+	        value: function setRefGlobal() {
+	            this.refGlobal = _utilsMapping2.default.formatGlobals(this.component.state.reference.global);
 	        }
 	    }, {
 	        key: 'checkChanged',
@@ -1286,8 +1366,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.changed = false;
 	            if (this.definition.changed) {
 	                this.changed = true;
-	            } else if (Object.keys(this.global).length > 0) {
-	                this.changed = isGlobalChanged(this.global, data, changed);
+	            } else if (Object.keys(this.refGlobal).length > 0 || Object.keys(this.selfGlobal).length > 0) {
+	                var globalsToCheck = Object.assign({}, this.selfGlobal, this.refGlobal);
+	                this.changed = _utilsMapping2.default.isGlobalChanged(globalsToCheck, data, changed);
 	            }
 	            return this.changed;
 	        }
@@ -1302,14 +1383,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.definition = definition;
 	        if (definition.state && definition.state.props && definition.state.props.global) {
-	            this.global = formatGlobals(definition.state.props.global);
+	            this.global = _utilsMapping2.default.formatGlobals(definition.state.props.global);
 	        }
 	    }
 	
 	    _createClass(ComponentDefinitionItem, [{
 	        key: 'checkChanged',
 	        value: function checkChanged(data, changed) {
-	            this.changed = isGlobalChanged(this.global, data, changed);
+	            this.changed = _utilsMapping2.default.isGlobalChanged(this.global, data, changed);
 	            return this.changed;
 	        }
 	    }]);
@@ -1321,7 +1402,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.ComponentDefinitionItem = ComponentDefinitionItem;
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1329,6 +1410,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
@@ -1497,43 +1580,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.root = root;
 	        this.definition = _utils2.default.clone(_defaultState(state));
+	        this.component = component;
 	        this.scoped = _utils2.default.clone(this.definition);
 	
-	        for (var methodName in this.scoped.methods.local) {
-	            this.scoped.methods.local[methodName].bind(this.scoped);
-	        }
-	
-	        for (var _methodName in this.scoped.methods.external) {
-	            this.scoped.methods.external[_methodName].bind(this.scoped);
-	        }
-	
-	        var _loop2 = function _loop2(_methodName2) {
-	            _this2.scoped.methods.global[_methodName2] = function () {
-	                var originalArgs = [].slice.call(arguments);
-	                var mergedArgs = [this.definition.methods.global[_methodName2].modifier, this.definition.methods.global[_methodName2].key];
-	                if (this.definition.methods.global[_methodName2].pass) {
-	                    var passedArgs = this.definition.methods.global[_methodName2].pass.apply(this.scoped, originalArgs);
-	                    mergedArgs = mergedArgs.concat(passedArgs);
-	                    this.root.executeModifier.apply(this.root, mergedArgs);
-	                } else {
-	                    mergedArgs = mergedArgs.concat(originalArgs);
-	                    this.root.executeModifier.apply(this.root, mergedArgs);
-	                }
-	            }.bind(_this2);
-	        };
-	
-	        for (var _methodName2 in this.definition.methods.global) {
-	            _loop2(_methodName2);
-	        }
+	        this.buildGlobalMethods();
 	
 	        this.scoped.setProps = function (props, silent) {
 	            var changedProps = _utils4.default.setChanges(_this2.scoped.props.local, props, silent, true);
-	            if (silent) {
-	                _this2.updateLocalProps(changedProps);
-	                return;
-	            }
 	            if (Object.keys(changedProps).length > 0) {
+	                if (silent) {
+	                    _this2.updateLocalProps(changedProps);
+	                    return;
+	                }
 	                _this2.component.onStateChange(changedProps);
+	            }
+	        };
+	        this.scoped.setGlobalProps = function (props) {
+	            for (var prop in props) {
+	                var globalDef = props[prop];
+	                var isPreviouslyDefined = _this2.definition.props.global[prop];
+	                var isInvalidDefinition = globalDef === null || (typeof globalDef === 'undefined' ? 'undefined' : _typeof(globalDef)) !== 'object';
+	                var newGlobalProps = {};
+	                if (isInvalidDefinition && isPreviouslyDefined) {
+	                    delete _this2.definition.props.global[prop];
+	                } else if (!isInvalidDefinition) {
+	                    _this2.definition.props.global[prop] = newGlobalProps[prop] = props[prop];
+	                }
+	                _this2.component.mapItem.setSelfGlobal(newGlobalProps);
+	                _this2.updateGlobalProps();
+	            }
+	        };
+	        this.scoped.setGlobalMethods = function (props) {
+	            for (var prop in props) {
+	                var globalDef = props[prop];
+	                var isPreviouslyDefined = _this2.definition.methods.global[prop];
+	                var isInvalidDefinition = globalDef === null || (typeof globalDef === 'undefined' ? 'undefined' : _typeof(globalDef)) !== 'object';
+	                if (isInvalidDefinition && isPreviouslyDefined) {
+	                    delete _this2.definition.methods.global[prop];
+	                } else if (!isInvalidDefinition) {
+	                    _this2.definition.methods.global[prop] = props[prop];
+	                }
+	                _this2.buildGlobalMethods();
 	            }
 	        };
 	
@@ -1545,10 +1632,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	
 	        this.scoped.router = this.root.router;
-	        this.scoped.execute = this.root.executeModifier.bind(this.root);
-	        this.scoped.id = component.scoped.id;
-	
-	        this.component = component;
+	        this.scoped.id = this.component.scoped.id;
 	
 	        this.reference = Object.assign({}, defaultSegregation);
 	        this.bindings = {};
@@ -1609,20 +1693,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }, {
 	        key: 'getGlobalStatePropName',
-	        value: function getGlobalStatePropName(originalProp) {
+	        value: function getGlobalStatePropName(data, originalProp) {
 	            var globals = this.getGlobalDef();
 	            for (var prop in globals) {
-	                if (globals[prop].key === originalProp) {
+	                if (globals[prop].key === originalProp && globals[prop].data === data) {
 	                    return prop;
 	                }
 	            }
 	        }
 	    }, {
 	        key: 'getGlobalStatePropNames',
-	        value: function getGlobalStatePropNames(props) {
+	        value: function getGlobalStatePropNames(data, props) {
 	            var localMap = {};
 	            for (var prop in props) {
-	                var localProp = this.getGlobalStatePropName(prop);
+	                var localProp = this.getGlobalStatePropName(data, prop);
 	                if (localProp !== undefined) localMap[localProp] = props[prop];
 	            }
 	            return localMap;
@@ -1675,7 +1759,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                props.external[prop] = this.reference.parent.props.external[parentStateKey];
 	            }
 	
-	            var _loop3 = function _loop3(_prop) {
+	            var _loop2 = function _loop2(_prop) {
 	                var bindToRelevantAncestor = function bindToRelevantAncestor(node, prop) {
 	                    if (!node) {
 	                        return null;
@@ -1696,7 +1780,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            };
 	
 	            for (var _prop in this.reference.local) {
-	                _loop3(_prop);
+	                _loop2(_prop);
 	            }
 	            var flatProps = Object.assign({}, props.local, props.external, props.global);
 	            Object.assign(this.scoped.props.external, flatProps);
@@ -1707,6 +1791,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.scoped.props.global = _buildGlobalProps(this.definition.props.global, this.root);
 	            if (this.reference.parent) {
 	                Object.assign(this.scoped.props.external, _buildGlobalProps(this.reference.global, this.root));
+	            }
+	        }
+	    }, {
+	        key: 'buildGlobalMethods',
+	        value: function buildGlobalMethods() {
+	            var _this4 = this;
+	
+	            var _loop3 = function _loop3(methodName) {
+	                _this4.scoped.methods.global[methodName] = function () {
+	                    var originalArgs = [].slice.call(arguments);
+	                    var mergedArgs = [this.definition.methods.global[methodName].modifier, this.definition.methods.global[methodName].key];
+	                    if (this.definition.methods.global[methodName].pass) {
+	                        var passedArgs = this.definition.methods.global[methodName].pass.apply(this.scoped, originalArgs);
+	                        mergedArgs = mergedArgs.concat(passedArgs);
+	                        this.root.executeModifier.apply(this.root, mergedArgs);
+	                    } else {
+	                        mergedArgs = mergedArgs.concat(originalArgs);
+	                        this.root.executeModifier.apply(this.root, mergedArgs);
+	                    }
+	                }.bind(_this4);
+	            };
+	
+	            for (var methodName in this.definition.methods.global) {
+	                _loop3(methodName);
 	            }
 	        }
 	
@@ -1771,7 +1879,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'setExternalReferencedProperty',
 	        value: function setExternalReferencedProperty(item, externalReferences, parentState) {
-	            var _this4 = this;
+	            var _this5 = this;
 	
 	            var key = item.name;
 	            var path = item.value.split('.');
@@ -1780,7 +1888,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            path = path.join('.');
 	
 	            if (externalReferences.parent.reference.global.hasOwnProperty(stateKey)) {
-	                externalReferences.global[key] = externalReferences.parent.reference.global[item.value];
+	                externalReferences.global[key] = externalReferences.parent.reference.global[stateKey];
+	                if (path) {
+	                    externalReferences.global[key].key += '.' + path;
+	                }
 	            } else if (externalReferences.parent.reference.external.hasOwnProperty(stateKey)) {
 	                externalReferences.external[key] = externalReferences.parent.reference.external[item.value];
 	            } else if (externalReferences.parent.reference.local.hasOwnProperty(stateKey)) {
@@ -1792,14 +1903,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	                        if (!node.reference.local[prop]) {
 	                            if (node.scoped.props.local[prop]) {
-	                                node.bind(prop, _this4);
+	                                node.bind(prop, _this5);
 	                            } else {
 	                                bindToRelevantAncestor(node.reference.parent, prop);
 	                            }
 	                        } else {
 	                            var parentStateKey = node.reference.local[prop].key;
 	                            if (node.reference.parent.scoped.props.local[parentStateKey]) {
-	                                node.reference.parent.bind(parentStateKey, _this4);
+	                                node.reference.parent.bind(parentStateKey, _this5);
 	                            } else {
 	                                bindToRelevantAncestor(node.reference.parent, parentStateKey);
 	                            }
@@ -1868,11 +1979,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'addRoutes',
 	        value: function addRoutes() {
-	            var _this5 = this;
+	            var _this6 = this;
 	
 	            if (this.definition.routes) {
 	                this.definition.routes.forEach(function (i) {
-	                    return _this5.root.router.add(i, _this5.scoped);
+	                    return _this6.root.router.add(i, _this6.scoped);
 	                });
 	            }
 	        }
@@ -1891,7 +2002,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = ComponentState;
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1925,6 +2036,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    _createClass(ComponentTag, [{
+	        key: 'html',
+	        value: function html(_html) {
+	            this._html = _html;
+	            return this;
+	        }
+	    }, {
 	        key: 'methods',
 	        value: function methods(_methods) {
 	            var formedMethods = {};
@@ -2013,7 +2130,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = ComponentTag;
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2112,7 +2229,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Data;
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2143,9 +2260,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            definition.super = def.extend;
 	        }
 	        this.definition = definition;
+	        this.id = def.id;
 	        this.root = root;
 	        this.scoped = _utils2.default.clone(definition);
 	        this.debounced = {};
+	
+	        this.timer = null;
+	        this.collectedDataChanges = {};
 	
 	        for (var methodName in this.scoped.methods) {
 	            this.scoped.methods[methodName] = this.scoped.methods[methodName].bind(this.scoped);
@@ -2165,7 +2286,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return _this.root.datas[data].getProps(propsMap);
 	        };
 	
+	        this.scoped.modify = this.root.executeModifier.bind(this.root);
+	
 	        this.scoped.router = this.root.router;
+	
+	        this.mapItem = this.root.addModifier(this);
 	
 	        this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
 	        this.sequencer.startSequence('mountModifier');
@@ -2205,6 +2330,48 @@ return /******/ (function(modules) { // webpackBootstrap
 	                });
 	            }
 	        }
+	    }, {
+	        key: 'getGlobalStatePropName',
+	        value: function getGlobalStatePropName(data, originalProp) {
+	            var globals = this.definition.props;
+	            for (var prop in globals) {
+	                if (globals[prop].key === originalProp && globals[prop].data === data) {
+	                    return prop;
+	                }
+	            }
+	            return false;
+	        }
+	    }, {
+	        key: 'getGlobalStatePropNames',
+	        value: function getGlobalStatePropNames(data, props) {
+	            var localMap = {};
+	            for (var prop in props) {
+	                var localProp = this.getGlobalStatePropName(data, prop);
+	                if (localProp) {
+	                    localMap[localProp] = props[prop];
+	                }
+	            }
+	            return localMap;
+	        }
+	    }, {
+	        key: 'onGlobalStateChange',
+	        value: function onGlobalStateChange(data, changed) {
+	            var _this3 = this;
+	
+	            var localChanged = this.getGlobalStatePropNames(data, changed);
+	            Object.assign(this.collectedDataChanges, localChanged);
+	            clearTimeout(this.timer);
+	            this.timer = setTimeout(function () {
+	                _this3.debounceGlobalStateChange();
+	            }, 10);
+	        }
+	    }, {
+	        key: 'debounceGlobalStateChange',
+	        value: function debounceGlobalStateChange() {
+	            this.timer = null;
+	            this.sequencer.startSequence('globalChangeModifier', [this.collectedDataChanges]);
+	            this.collectedDataChanges = {};
+	        }
 	    }]);
 	
 	    return Modifier;
@@ -2213,7 +2380,54 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Modifier;
 
 /***/ },
-/* 14 */
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.ModifierItem = undefined;
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _constants = __webpack_require__(1);
+	
+	var _utilsMapping = __webpack_require__(7);
+	
+	var _utilsMapping2 = _interopRequireDefault(_utilsMapping);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var ModifierItem = function () {
+	    function ModifierItem(modifier) {
+	        _classCallCheck(this, ModifierItem);
+	
+	        this.modifier = modifier;
+	        this.definition = modifier.definition;
+	        if (this.definition.props) {
+	            this.global = _utilsMapping2.default.formatGlobals(this.definition.props);
+	        }
+	    }
+	
+	    _createClass(ModifierItem, [{
+	        key: 'checkChanged',
+	        value: function checkChanged(data, changed) {
+	            this.changed = _utilsMapping2.default.isGlobalChanged(this.global, data, changed);
+	            return this.changed;
+	        }
+	    }]);
+	
+	    return ModifierItem;
+	}();
+	
+	exports.ModifierItem = ModifierItem;
+
+/***/ },
+/* 16 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2366,7 +2580,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Router;
 
 /***/ },
-/* 15 */
+/* 17 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2380,7 +2594,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2398,7 +2612,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else {
 	                this.base.updateState();
 	            }
-	            return [this.params];
+	            return [true];
 	        },
 	        retrieve: function retrieve(step, hook, res) {
 	            if (step.target === 'component') {
@@ -2413,21 +2627,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	            action: 'render'
 	        }]
 	    },
+	    resume: {
+	        //retrieve: function (step, hook, res) {
+	        //    if (step.target === 'component') {
+	        //        this.base.onRender(res);
+	        //    }
+	        //},
+	        send: function send(step, hook) {
+	            if (step.target === 'component') {
+	                this.base.updateState();
+	            }
+	            return [true];
+	        },
+	        sequence: [{
+	            target: 'state',
+	            action: 'resume'
+	        }, {
+	            target: 'component',
+	            action: 'render'
+	        }]
+	    },
 	    localChange: {
 	        send: function send(step, hook) {
 	            if (step.target === 'state') {
 	                if (hook === false) {
-	                    this.base.state.updateLocalProps(this.params);
+	                    this.base.state.updateLocalProps(this.params[0]);
 	                    this.base.updateState();
 	                }
 	            } else {
 	                this.base.updateState();
 	            }
-	            return [this.params];
+	            return this.params;
 	        },
 	        retrieve: function retrieve(step, hook, res) {
 	            if (step.target === 'component') {
 	                this.base.onRender(res);
+	                if (hook === 'post') {
+	                    this.base.onDescendantChange();
+	                }
 	            }
 	        },
 	        sequence: [{
@@ -2443,11 +2680,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (step.target === 'component') {
 	                this.base.updateState();
 	            }
-	            return [this.params];
+	            return this.params;
 	        },
 	        retrieve: function retrieve(step, hook, res) {
 	            if (step.target === 'component') {
 	                this.base.onRender(res);
+	                if (hook === 'post') {
+	                    this.base.onDescendantChange();
+	                }
 	            }
 	        },
 	        sequence: [{
@@ -2468,11 +2708,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else {
 	                this.base.updateState();
 	            }
-	            return [this.params];
+	            return this.params;
 	        },
 	        retrieve: function retrieve(step, hook, res) {
 	            if (step.target === 'component') {
 	                this.base.onRender(res);
+	                if (hook === 'post') {
+	                    this.base.onDescendantChange();
+	                }
 	            }
 	        },
 	        sequence: [{
@@ -2492,11 +2735,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else {
 	                this.base.updateState();
 	            }
-	            return [this.params];
+	            return this.params;
 	        },
 	        retrieve: function retrieve(step, hook, res) {
 	            if (step.target === 'component') {
 	                this.base.onRender(res);
+	                if (hook === 'post') {
+	                    this.base.onDescendantChange();
+	                }
 	            }
 	        },
 	        sequence: [{
@@ -2507,12 +2753,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            action: 'render'
 	        }]
 	    },
+	    descendantChange: {
+	        sequence: [{
+	            target: 'component',
+	            action: 'descendantChange'
+	        }]
+	    },
 	
 	    destroy: {
-	        send: function send(step, hook) {
-	            return [];
-	        },
-	        retrieve: function retrieve(step, hook, res) {},
 	        sequence: [{
 	            target: 'state',
 	            action: 'destroy'
@@ -2527,17 +2775,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (hook === 'pre') {
 	                this.base.addRoutes();
 	            }
-	            return [this.params];
+	            return this.params;
 	        },
 	        sequence: [{
 	            target: 'modifier',
 	            action: 'mount'
 	        }]
+	    },
+	    globalChangeModifier: {
+	        sequence: [{
+	            target: 'modifier',
+	            action: 'change'
+	        }]
 	    }
 	};
 
 /***/ },
-/* 17 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2548,27 +2802,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _componentDefinition = __webpack_require__(7);
+	var _componentDefinition = __webpack_require__(8);
 	
 	var _componentDefinition2 = _interopRequireDefault(_componentDefinition);
 	
-	var _component = __webpack_require__(8);
+	var _component = __webpack_require__(9);
 	
 	var _component2 = _interopRequireDefault(_component);
 	
-	var _componentState = __webpack_require__(10);
+	var _componentState = __webpack_require__(11);
 	
 	var _componentState2 = _interopRequireDefault(_componentState);
 	
-	var _modifier2 = __webpack_require__(13);
+	var _modifier2 = __webpack_require__(14);
 	
 	var _modifier3 = _interopRequireDefault(_modifier2);
 	
-	var _data = __webpack_require__(12);
+	var _data = __webpack_require__(13);
 	
 	var _data2 = _interopRequireDefault(_data);
 	
-	var _componentTag = __webpack_require__(11);
+	var _componentTag = __webpack_require__(12);
 	
 	var _componentTag2 = _interopRequireDefault(_componentTag);
 	
@@ -2576,7 +2830,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _sequencer2 = _interopRequireDefault(_sequencer);
 	
-	var _router = __webpack_require__(14);
+	var _router = __webpack_require__(16);
 	
 	var _router2 = _interopRequireDefault(_router);
 	
@@ -2588,15 +2842,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _utils2 = _interopRequireDefault(_utils);
 	
-	var _componentMapping = __webpack_require__(9);
+	var _componentMapping = __webpack_require__(10);
+	
+	var _modifierMapping = __webpack_require__(15);
 	
 	var _constants = __webpack_require__(1);
 	
-	var _sequencerConfig = __webpack_require__(16);
+	var _sequencerConfig = __webpack_require__(18);
 	
 	var _sequencerConfig2 = _interopRequireDefault(_sequencerConfig);
 	
-	var _routerConfig = __webpack_require__(15);
+	var _routerConfig = __webpack_require__(17);
 	
 	var _routerConfig2 = _interopRequireDefault(_routerConfig);
 	
@@ -2625,6 +2881,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.components = [];
 	        this.componentsDefinition = [];
 	        this.componentElements = [];
+	        this.modifiersDefinition = [];
 	        this.router = router;
 	        this.logs = new _logs2.default();
 	
@@ -2694,8 +2951,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this.componentElements.forEach(function (item) {
 	                if (item.element.component.active) {
 	                    if (item.checkChanged(data, Object.keys(changed))) {
-	                        item.element.component.onGlobalStateChange(changed);
+	                        item.element.component.onGlobalStateChange(data, changed);
 	                    }
+	                }
+	            });
+	
+	            this.modifiersDefinition.forEach(function (item) {
+	                if (item.checkChanged(data, Object.keys(changed))) {
+	                    item.modifier.onGlobalStateChange(data, changed);
 	                }
 	            });
 	        }
@@ -2751,6 +3014,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            componentItem.setDefinition(this.componentsDefinition[componentItem.tag.toLowerCase()]);
 	            return componentItem;
 	        }
+	    }, {
+	        key: 'addModifier',
+	        value: function addModifier(modifier) {
+	            this.modifiersDefinition.push(new _modifierMapping.ModifierItem(modifier));
+	        }
 	    }]);
 	
 	    return Root;
@@ -2759,7 +3027,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Root;
 
 /***/ },
-/* 18 */
+/* 20 */
 /***/ function(module, exports) {
 
 	// Console-polyfill. MIT license.
@@ -2784,7 +3052,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 19 */
+/* 21 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*!

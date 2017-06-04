@@ -48,9 +48,12 @@ export default class Component {
             }
             //storing callbacks in a map to keep reference for later unbinding on demand
             this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback] = this.scoped[evObj.callback].bind(this.scoped);
-            _target.forEach(trg => {
-                trg.addEventListener(evObj.event, this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
-            });
+            for(let i in _target) {
+                let trg = _target[i];
+                if(typeof trg === 'object' && trg !== null) {
+                    trg.addEventListener(evObj.event, this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
+                }
+            }
         });
         this.scoped.isInitiatedEvents = true;
     }
@@ -124,6 +127,9 @@ export default class Component {
         if (Object.keys(localChanged).length > 0 || isInitialHTMLChanged) {
             this.sequencer.startSequence('externalChange', [localChanged]);
         }
+        else {
+            this.sequencer.startSequence('resume');
+        }
     }
 
     updateState() {
@@ -159,6 +165,16 @@ export default class Component {
         this.sequencer.startSequence('globalChange', [this.collectedDataChanges]);
         this.timer = null;
         this.collectedDataChanges = {};
+    }
+
+    onDescendantChange(component) {
+        let comp = component || this;
+        if(component) {
+            this.sequencer.startSequence('descendantChange', [component.scoped]);
+        }
+        if(this.mapItem.parent) {
+            this.mapItem.parent.component.onDescendantChange(comp);
+        }
     }
 
     onRender(html) {
