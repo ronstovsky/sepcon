@@ -73,7 +73,8 @@ describe('Modifier Properties', ()=>{
                     done();
                 },
                 mount() {
-                    this.modify('globals', 'updateNumber', 7);
+                    //this.modify('globals', 'updateNumber', 7);
+                    scope.modifier('globals').updateNumber(7);
                 }
             }
         });
@@ -101,7 +102,7 @@ describe('Modifier Properties', ()=>{
                     done();
                 },
                 mount() {
-                    this.modify('globals', 'updateTwoDatas');
+                    scope.modifier('globals').updateTwoDatas();
                 }
             }
         });

@@ -70,8 +70,25 @@ class SepConClass {
         this.root = new Root(this, options);
         this.classes = this.root.classes;
         this.setConfiguration = this.root.setConfiguration.bind(this.root);
-
-        this.modify = this.root.executeModifier.bind(this.root);
+    }
+    modifier(modifier) {
+        if (this.root.modifiers[modifier]) {
+            return this.root.modifiers[modifier].scoped.methods;
+        }
+    }
+    service(service, provider = null) {
+        let services;
+        provider = provider || this.root.defaultProvider;
+        if(provider && this.root.providers[provider] && this.root.providers[provider].services[service]) {
+            services = this.root.providers[provider].services;
+        }
+        else {
+            services = this.root.services;
+        }
+        if(services[service]) {
+            return services[service].scoped.methods;
+        }
+        return null;
     }
     createData(def) {
         return create.call(this, def, 'data', this.root.datas, this.root.classes.Data);
@@ -79,8 +96,23 @@ class SepConClass {
     createModifier(def) {
         return create.call(this, def, 'modifier', this.root.modifiers, this.root.classes.Modifier);
     }
+    createProvider(def) {
+        return create.call(this, def, 'provider', this.root.providers, this.root.classes.Provider);
+    }
     createService(def) {
-        return create.call(this, def, 'service', this.root.services, this.root.classes.Service);
+        if(def.provider && !this.root.providers[def.provider]) {
+            this.root.logs.print({
+                title: { content: `Reference to Non-Existing Service Provider`},
+                rows: [
+                    { style: 'label', content: 'Service Id' },
+                    { style: 'code', content: def.id },
+                    { style: 'label', content: 'Provider Id' },
+                    { style: 'code', content: def.provider },
+                ]
+            });
+            return false;
+        }
+        return create.call(this, def, 'service', def.provider ? this.root.providers[def.provider].services : this.root.services, this.root.classes.Service);
     }
     createComponent(def) {
         create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);

@@ -42,7 +42,7 @@ export default class Data {
         if(prop) {
             const props = prop.split('.');
             for (let i = 0, e = props.length; i < e; i++) {
-                if (value[props[i]] === undefined) {
+                if (!value || value[props[i]] === undefined) {
                     this.root.logs.print({
                         title: {content: `Could Not Find a Requested Data Property`},
                         rows: [

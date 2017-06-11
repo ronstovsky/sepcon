@@ -152,6 +152,6 @@ describe('Component Performance', ()=>{
 
     it('update all 2000 rows with global change', (done) => {
         doneCaller.setDoneCb(done);
-        scope.modify('globals', 'updateNumber');
+        scope.modifier('globals').updateNumber();
     });
 });

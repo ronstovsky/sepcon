@@ -51,7 +51,6 @@ export default SepCon.createComponent({
         'render'() {
             return `<div class="sepcon sepcon-element">
                 <input name="${this.props.name}" value="${this.props.currentValue}"/>
-                ${OneNumberChanger.createTag().render()}
             </div>`;
         },
         handleChange(e) {

@@ -27,8 +27,7 @@ export default class {
 
             let target;
             switch(sequenceStep.target) {
-                case 'component':
-                case 'modifier':
+                default:
                     target = this.base.scoped;
                     break;
                 case 'state':

@@ -42,7 +42,7 @@ export default class Modifier {
         this.mapItem = this.root.addModifier(this);
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
-        this.sequencer.startSequence('mountModifier');
+        this.sequencer.startSequence('mountBase');
     }
 
     execute(method, params) {

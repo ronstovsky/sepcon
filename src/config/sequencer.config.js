@@ -193,7 +193,7 @@ export default {
         ]
     },
 
-    mountModifier: {
+    mountBase: {
         send: function (step, hook, params) {
             if (hook === 'pre') {
                 this.base.addRoutes();

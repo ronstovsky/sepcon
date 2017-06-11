@@ -53,7 +53,8 @@ describe('Component Global Segregation (+ Data & Modifier)', ()=>{
     });
 
     beforeEach(function() {
-        scope.modify('globalMethods', 'start');
+        scope.modifier('globalMethods').start();
+
         testNum++;
 
         document.getElementById('ui-tests').innerHTML = '';
