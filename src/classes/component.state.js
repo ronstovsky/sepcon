@@ -303,7 +303,7 @@ export default class ComponentState {
         props.global = _buildGlobalProps(this.reference.global, this.root);
         for (let prop in this.reference.external) {
             const parentStateKey = this.reference.external[prop].key;
-            props.external[prop] = this.reference.parent.props.external[parentStateKey];
+            props.external[prop] = this.reference.parent.scoped.props.external[parentStateKey];
         }
         for (let prop in this.reference.local) {
             const bindToRelevantAncestor = (node, prop) => {

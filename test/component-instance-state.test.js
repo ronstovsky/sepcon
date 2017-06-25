@@ -53,6 +53,34 @@ describe('Component Unit', ()=>{
         document.getElementById('ui-tests').appendChild(DIV);
     });
 
+    it('should recognize referenced properties if external on parent', (done) => {
+        const child = scope.createComponent({
+            id: 'test-'+testNum+'-child',
+            component: {
+                state: {
+                    mount() {
+                        expect(this.props.external.check).to.be.equal(1);
+                        done();
+                    }
+                }
+            }
+        });
+        const parent = scope.createComponent({
+            id: 'test-'+testNum+'-parent',
+            component: {
+                render() {
+                    const childElement = child.createTag()
+                        .refProps({check: 'passedProp'});
+                    expect(this.props.passedProp).to.be.equal(1);
+                    return `passedProp: ${this.props.passedProp} => ${childElement.render()}`;
+                }
+            }
+        });
+        let DIV = document.createElement('div');
+        DIV.innerHTML = parent.createTag().props({ passedProp: 1}).render();
+        document.getElementById('ui-tests').appendChild(DIV);
+    });
+
     it('should execute passed annonymus method', (done) => {
         const child = scope.createComponent({
             id: 'test-'+testNum+'-child',
@@ -104,32 +132,6 @@ describe('Component Unit', ()=>{
                     const childElement = child.createTag()
                         .refMethods({
                             executeCb: 'executeMe'
-                        });
-                    return childElement.render();
-                }
-            }
-        });
-        let DIV = document.createElement('div');
-        DIV.innerHTML = parent.createTag().render();
-        document.getElementById('ui-tests').appendChild(DIV);
-    });
-
-    it('should execute passed annonymus method', (done) => {
-        const child = scope.createComponent({
-            id: 'test-'+testNum+'-child',
-            component: {
-                render() {
-                    this.methods.executeCb();
-                }
-            }
-        });
-        const parent = scope.createComponent({
-            id: 'test-'+testNum+'-parent',
-            component: {
-                render() {
-                    const childElement = child.createTag()
-                        .methods({
-                            executeCb: done
                         });
                     return childElement.render();
                 }
