@@ -50,4 +50,17 @@ config.jshint = {
     failOnHint: false,
     loopfunc: true,
 };
+
+config.devServer = {
+    colors: true,
+    hot: true,
+    inline: true,
+    progress: true,
+    host: 'localhost',
+    port: 3000,
+    historyApiFallback: {
+        index: 'index.html'
+    }
+};
+
 module.exports = config;

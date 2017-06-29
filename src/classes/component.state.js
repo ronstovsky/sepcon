@@ -122,13 +122,24 @@ const chainMethods = (methods, seg, name) => {
 };
 
 const changeBindedProps = (state, props) => {
+    let states = [];
+    let statesData = [];
     for (let prop in props) {
         if (state.bindings[prop]) {
             state.bindings[prop].forEach((bindedState) => {
-                bindedState.component.onReferenceChange({[prop]: props[prop]});
+                let stateIndex = states.indexOf(bindedState);
+                if(stateIndex === -1) {
+                    states.push(bindedState);
+                    stateIndex = states.length - 1;
+                    statesData[stateIndex] = {};
+                }
+                statesData[stateIndex][prop] = props[prop];
             });
         }
     }
+    states.forEach((state, index) => {
+        state.component.onReferenceChange(statesData[index]);
+    });
 };
 
 /**
@@ -295,6 +306,26 @@ export default class ComponentState {
 
     updateReferencedProps() {
         if (!this.reference.parent) return;
+        const extractRelevantValue = (refProp) => {
+            const parentStateKey = refProp.key;
+            let path;
+            if(parentStateKey.indexOf('.') >= 0) {
+                path = parentStateKey.split('.');
+            }
+            const state = refProp.state;
+            if(path) {
+                let statePosition = state;
+                while(path.length) {
+                    const position = path[0];
+                    statePosition = statePosition[position];
+                    path.shift();
+                }
+                return statePosition;
+            }
+            else {
+                return state[parentStateKey];
+            }
+        };
         let props = {
             global: {},
             external: {},
@@ -302,27 +333,11 @@ export default class ComponentState {
         };
         props.global = _buildGlobalProps(this.reference.global, this.root);
         for (let prop in this.reference.external) {
-            const parentStateKey = this.reference.external[prop].key;
-            props.external[prop] = this.reference.parent.scoped.props.external[parentStateKey];
+            props.external[prop] = extractRelevantValue(this.reference.external[prop]);
         }
         for (let prop in this.reference.local) {
-            const bindToRelevantAncestor = (node, prop) => {
-                if (!node) {
-                    return null;
-                }
-                if (!node.reference.local[prop]) {
-                    if (node.scoped.props.local[prop]) {
-                        return node.scoped.props.local[prop];
-                    }
-                    return bindToRelevantAncestor(node.reference.parent, prop);
-                }
-                const parentStateKey = node.reference.local[prop].key;
-                if (node.reference.parent.scoped.props.local[parentStateKey]) {
-                    return node.reference.parent.scoped.props.local[parentStateKey];
-                }
-                return bindToRelevantAncestor(node.reference.parent, parentStateKey);
-            };
-            props.local[prop] = bindToRelevantAncestor(this, prop);
+            props.local[prop] = extractRelevantValue(this.reference.local[prop]);
+
         }
         const flatProps = Object.assign({}, props.local, props.external, props.global);
         Object.assign(this.scoped.props.external, flatProps);
@@ -404,24 +419,31 @@ export default class ComponentState {
     setExternalProperty(item, externalProperties) {
         externalProperties[item.name] = ReferenceMap.get(item.value);
     }
-    setExternalReferencedProperty(item, externalReferences, parentState) {
+    setExternalReferencedProperty(item, externalReferences, parentState, passedExternalReference = null) {
         const key = item.name;
         let path = item.value.split('.');
         const stateKey = path[0]; //base property in store
         path.shift();
         path = path.join('.');
 
-        if (externalReferences.parent.reference.global.hasOwnProperty(stateKey)) {
-            externalReferences.global[key] = externalReferences.parent.reference.global[stateKey];
+        if(!passedExternalReference) {
+            passedExternalReference = externalReferences;
+        }
+        if(!passedExternalReference.parent) {
+            return false;
+        }
+
+        if (passedExternalReference.parent.reference.global.hasOwnProperty(stateKey)) {
+            externalReferences.global[key] = passedExternalReference.parent.reference.global[stateKey];
             if(path) {
                 externalReferences.global[key].key += '.' + path;
             }
         }
-        else if (externalReferences.parent.reference.external.hasOwnProperty(stateKey)) {
-            externalReferences.external[key] = externalReferences.parent.reference.external[item.value];
+        else if (passedExternalReference.parent.reference.external.hasOwnProperty(stateKey)) {
+            externalReferences.external[key] = passedExternalReference.parent.reference.external[item.value];
         }
-        else if (externalReferences.parent.reference.local.hasOwnProperty(stateKey)) {
-            externalReferences.local[key] = externalReferences.parent.reference.local[item.value];
+        else if (passedExternalReference.parent.reference.local.hasOwnProperty(stateKey)) {
+            externalReferences.local[key] = passedExternalReference.parent.reference.local[item.value];
             const bindToRelevantAncestor = (node, prop) => {
                 if (!node) {
                     return null;
@@ -444,20 +466,29 @@ export default class ComponentState {
                     }
                 }
             };
-            bindToRelevantAncestor(externalReferences.parent, stateKey);
+            bindToRelevantAncestor(passedExternalReference.parent, stateKey);
         }
-        else if (externalReferences.parent.scoped.props.global.hasOwnProperty(stateKey)) {
+        else if (passedExternalReference.parent.scoped.props.global.hasOwnProperty(stateKey)) {
             externalReferences.global[key] = parentState.getGlobalDef()[stateKey];
             if(path) {
                 externalReferences.global[key].key += '.' + path;
             }
         }
-        else if (externalReferences.parent.scoped.props.external.hasOwnProperty(stateKey)) {
-            externalReferences.external[key] = {key: item.value};
+        else if (passedExternalReference.parent.scoped.props.external.hasOwnProperty(stateKey)) {
+            externalReferences.external[key] = {
+                key: item.value,
+                state: passedExternalReference.parent.scoped.props.external
+            };
+        }
+        else if (passedExternalReference.parent.scoped.props.local.hasOwnProperty(stateKey)) {
+            externalReferences.local[key] = {
+                key: item.value,
+                state: passedExternalReference.parent.scoped.props.local
+            };
+            parentState.bind(stateKey, this);
         }
         else {
-            externalReferences.local[key] = {key: item.value};
-            parentState.bind(stateKey, this);
+            this.setExternalReferencedProperty(item, externalReferences, parentState.component.parent.component.state, passedExternalReference.parent.reference);
         }
     }
 
@@ -496,6 +527,10 @@ export default class ComponentState {
     }
 
     bind(prop, state) {
+        if(prop.indexOf('.') >= 0) {
+            path = prop.split('.');
+            prop = prop[0];
+        }
         if(!this.bindings[prop]) {
             this.bindings[prop] = [];
         }

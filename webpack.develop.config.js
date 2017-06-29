@@ -13,16 +13,6 @@ module.exports = {
     },
     devtool: 'source-map',
 
-    devServer: {
-        colors:true,
-        historyApiFallback: true,
-        hot: true,
-        inline: true,
-        progress: true,
-        host: 'localhost',
-        port: 3000,
-    },
-
     plugins: [
         new webpack.HotModuleReplacementPlugin()
     ],
