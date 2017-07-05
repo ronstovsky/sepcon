@@ -143,21 +143,21 @@ export default class ComponentDefinition {
                 this.originalInnerHTML = this.innerHTML;
                 this.innerHTML = '';
 
-                Promise.resolve().then(()=>{
-                    if(!common.isInDome(this)) return false;
-                    if(common.isDeepNestedInSameComponent(this)) {
-                        root.logs.print({
-                            title: { content: 'WARNING - A Component Is Nested Inside Itself' },
-                            rows: [
-                                { style: 'label', content: 'Components Path' },
-                                { style: 'code', content: common.getComponentElementsPath(this, true, true) },
-                                { style: 'label', content: 'DOM Element' },
-                                { content: this }
-                            ]
-                        });
-                        //return false;
-                    }
-                    const parent = common.getParentComponentElement(this);
+                const startComponentFromElement = () => {
+                    if(!common.isInDOM(this)) return false;
+                    //if(common.isDeepNestedInSameComponent(this)) {
+                    //    root.logs.print({
+                    //        title: { content: 'WARNING - A Component Is Nested Inside Itself' },
+                    //        rows: [
+                    //            { style: 'label', content: 'Components Path' },
+                    //            { style: 'code', content: common.getComponentElementsPath(this, true, true) },
+                    //            { style: 'label', content: 'DOM Element' },
+                    //            { content: this }
+                    //        ]
+                    //    });
+                    //    //return false;
+                    //}
+                    let parent = common.getParentComponentElement(this);
                     this._componentElement = {
                         isInitialized: false,
                         path: common.getComponentElementsPath(this),
@@ -168,13 +168,10 @@ export default class ComponentDefinition {
                          * if not - will bind a new instance and trigger its 'initialize' method
                          */
                         init: () => {
-                            if(!common.isInDome(this)) {
-                                this.component = false;
+                            if(!common.isInDOM(this)) {
+                                //this.component = false;
                                 return;
                             }
-
-                            //const parent = common.getParentComponentElement(this);
-                            //this._componentElement.parent = parent;
 
                             let parentComponent = false;
                             if(!this.component && parent) {
@@ -206,15 +203,15 @@ export default class ComponentDefinition {
                         this._componentElement.init();
                     }
                     root.componentElementAdded(this);
-                });
+                };
+
+                Promise.resolve().then(startComponentFromElement);
             }
             disconnectedCallback() {
                 //root.removeComponentInstance(this.component.id);
                 if(this.component) {
                     this.component.onDestroy();
                 }
-            }
-            attributeChangedCallback() {
             }
         }
         customElements.define(this.tag, HTMLComponent);

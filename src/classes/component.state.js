@@ -57,6 +57,7 @@ const _buildGlobalProps = (globals, root) => {
                     { style: 'code', content: dataName },
                 ]
             });
+            _props[prop] = null;
         }
         else {
             _props[prop] = root.datas[dataName].getProp(dataKey);
@@ -169,20 +170,21 @@ export default class ComponentState {
             }
         };
         this.scoped.setGlobalProps = (props) => {
+            let newGlobalProps = {};
             for(let prop in props) {
                 const globalDef = props[prop];
                 let isPreviouslyDefined = this.definition.props.global[prop];
                 let isInvalidDefinition = globalDef === null || typeof globalDef !== 'object';
-                let newGlobalProps = {};
                 if(isInvalidDefinition && isPreviouslyDefined) {
                     delete this.definition.props.global[prop];
                 }
                 else if(!isInvalidDefinition) {
                     this.definition.props.global[prop] = newGlobalProps[prop] = props[prop];
                 }
-                this.component.mapItem.setSelfGlobal(newGlobalProps);
-                this.updateGlobalProps();
             }
+            this.component.mapItem.setSelfGlobal(newGlobalProps);
+            this.updateGlobalProps();
+            this.component.updateState();
         };
         this.scoped.setGlobalMethods = (props) => {
             for(let prop in props) {
@@ -300,8 +302,8 @@ export default class ComponentState {
     updateLocalProps(changed) {
         for (let prop in changed) {
             this.scoped.props.local[prop] = changed[prop].newValue;
-            changeBindedProps(this, changed);
         }
+        changeBindedProps(this, changed);
     }
 
     updateReferencedProps() {

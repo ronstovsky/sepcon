@@ -54,7 +54,7 @@ export default class Data {
                             {style: 'code', content: common.clone(this.data)},
                         ]
                     });
-                    return undefined;
+                    return null;
                 }
                 value = value[props[i]];
             }

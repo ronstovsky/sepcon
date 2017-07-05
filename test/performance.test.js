@@ -135,7 +135,7 @@ describe('Component Performance', ()=>{
         let DIV = document.createElement('div');
         DIV.innerHTML = rows.join('');
         document.getElementById('ui-tests').appendChild(DIV);
-    });
+    }).timeout(5000);
 
     it('render 1000 rows in container', (done) => {
         let rowsHtml = rows.createTag()
@@ -148,10 +148,10 @@ describe('Component Performance', ()=>{
         let DIV = document.createElement('div');
         DIV.innerHTML = rowsHtml;
         document.getElementById('ui-tests').appendChild(DIV);
-    });
+    }).timeout(5000);
 
     it('update all 2000 rows with global change', (done) => {
         doneCaller.setDoneCb(done);
         scope.modifier('globals').updateNumber();
-    });
+    }).timeout(5000);
 });

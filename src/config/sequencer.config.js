@@ -28,16 +28,16 @@ export default {
         ]
     },
     resume: {
-        //retrieve: function (step, hook, res) {
-        //    if (step.target === 'component') {
-        //        this.base.onRender(res);
-        //    }
-        //},
         send: function (step, hook) {
             if (step.target === 'component') {
                 this.base.updateState();
             }
             return [true];
+        },
+        retrieve: function (step, hook, res) {
+            if (step.target === 'component') {
+                this.base.onRender(res);
+            }
         },
         sequence: [
             {
@@ -66,9 +66,6 @@ export default {
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
                 this.base.onRender(res);
-                if(hook === 'post') {
-                    this.base.onDescendantChange();
-                }
             }
         },
         sequence: [
@@ -92,9 +89,6 @@ export default {
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
                 this.base.onRender(res);
-                if(hook === 'post') {
-                    this.base.onDescendantChange();
-                }
             }
         },
         sequence: [
@@ -124,9 +118,6 @@ export default {
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
                 this.base.onRender(res);
-                if(hook === 'post') {
-                    this.base.onDescendantChange();
-                }
             }
         },
         sequence: [

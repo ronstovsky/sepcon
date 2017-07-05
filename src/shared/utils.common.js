@@ -81,13 +81,9 @@ export default {
     },
 
     //Component Functions
-    isInDome(element) {
-        let parent = element.parentNode;
-        while(parent && parent.tagName.toLowerCase() != 'body') {
-            parent = parent.parentNode;
-        }
-        if(!parent) return false;
-        return true;
+    isInDOM(element) {
+        if(!element) return false;
+        return document.body.contains(element);
     },
     isDeepNestedInSameComponent(element) {
         const path = this.getComponentElementsPath(element, true, true);

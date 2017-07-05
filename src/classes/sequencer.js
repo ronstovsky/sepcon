@@ -10,15 +10,24 @@ export default class {
         const seq = this.config[sequence];
 
         let promise = Promise;
-        if(this.handleSequenceStep('pre', seq, params)) {
-            promise.resolve().then(()=> {
-                if (this.handleSequenceStep(false, seq, params)) {
-                    window.requestAnimationFrame(()=> {
-                        this.handleSequenceStep('post', seq, params);
-                    });
-                }
-            });
-        }
+        return new Promise((resolve, reject) => {
+            if (this.handleSequenceStep('pre', seq, params)) {
+                promise.resolve().then(()=> {
+                    if (this.handleSequenceStep(false, seq, params)) {
+                        window.requestAnimationFrame(()=> {
+                            this.handleSequenceStep('post', seq, params);
+                            resolve();
+                        });
+                    }
+                    else {
+                        resolve();
+                    }
+                });
+            }
+            else {
+                resolve();
+            }
+        });
     }
     handleSequenceStep(hook, seq, params) {
         for(let i = 0, e = seq.sequence.length; i < e; i++){

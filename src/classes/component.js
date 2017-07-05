@@ -120,15 +120,19 @@ export default class Component {
         let isInitialHTMLChanged = this.scoped.html != this.scoped.element.originalInnerHTML;
         this.scoped.html = this.scoped.element.originalInnerHTML;
         this.scoped.children = this.scoped.element.originalChildren;
-        this.scoped.element.innerHTML = this.currentHtml;
+        //this.scoped.element.innerHTML = this.currentHtml;
         this.bindEvents();
         this.state.addRoutes();
         const localChanged = changes.setChanges(this.componentPrevProps, this.scoped.props);
         if (Object.keys(localChanged).length > 0 || isInitialHTMLChanged) {
-            this.sequencer.startSequence('externalChange', [localChanged]);
+            this.sequencer.startSequence('externalChange', [localChanged]).then(() => {
+                this.preventEmptyHtml();
+            });
         }
         else {
-            this.sequencer.startSequence('resume');
+            this.sequencer.startSequence('resume').then(() => {
+                this.preventEmptyHtml();
+            });
         }
     }
 
@@ -145,12 +149,16 @@ export default class Component {
     }
 
     onStateChange(changed) {
-        this.sequencer.startSequence('localChange', [changed]);
+        this.sequencer.startSequence('localChange', [changed]).then(() => {
+            this.preventEmptyHtml();
+        });
     }
 
     onReferenceChange(changed) {
         const localChanged = this.state.getReferenceStatePropNames(changed);
-        this.sequencer.startSequence('referenceChange', [localChanged]);
+        this.sequencer.startSequence('referenceChange', [localChanged]).then(() => {
+            this.preventEmptyHtml();
+        });
     }
 
     onGlobalStateChange(data, changed) {
@@ -162,7 +170,9 @@ export default class Component {
         }, 10);
     }
     debounceGlobalStateChange() {
-        this.sequencer.startSequence('globalChange', [this.collectedDataChanges]);
+        this.sequencer.startSequence('globalChange', [this.collectedDataChanges]).then(() => {
+            this.preventEmptyHtml();
+        });
         this.timer = null;
         this.collectedDataChanges = {};
     }
@@ -178,11 +188,21 @@ export default class Component {
     }
 
     onRender(html) {
-        if(!html || typeof html != 'string') {
-            return;
-        }
-        if(html != this.currentHtml) {
+        const isValid = html && typeof html === 'string';
+        const isDifferent = html != this.currentHtml;
+        if(isValid && isDifferent) {
             this.scoped.element.innerHTML = this.currentHtml = html;
+            this.bindEvents();
+            this.onDescendantChange();
+        }
+        else {
+            this.preventEmptyHtml();
+        }
+    }
+
+    preventEmptyHtml() {
+        if(!this.scoped.element.innerHTML && this.currentHtml) {
+            this.scoped.element.innerHTML = this.currentHtml;
             this.bindEvents();
         }
     }
