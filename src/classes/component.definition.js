@@ -144,7 +144,7 @@ export default class ComponentDefinition {
                 this.innerHTML = '';
 
                 const startComponentFromElement = () => {
-                    if(!common.isInDOM(this)) return false;
+                    //if(!common.isInDOM(this)) return false;
                     //if(common.isDeepNestedInSameComponent(this)) {
                     //    root.logs.print({
                     //        title: { content: 'WARNING - A Component Is Nested Inside Itself' },
@@ -202,7 +202,9 @@ export default class ComponentDefinition {
                     else {
                         this._componentElement.init();
                     }
-                    root.componentElementAdded(this);
+                    if(!this._componentElement.isInitialized) {
+                        root.componentElementAdded(this);
+                    }
                 };
 
                 Promise.resolve().then(startComponentFromElement);

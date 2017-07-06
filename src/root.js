@@ -40,6 +40,7 @@ export default class Root {
         this.components = [];
         this.componentsDefinition = [];
         this.componentElements = [];
+        this.newComponentElements = [];
         this.modifiersDefinition = [];
         this.router = router;
         this.logs = new Logs();
@@ -124,16 +125,18 @@ export default class Root {
      * @param element
      */
     componentElementAdded() {
-        this.componentElements.forEach((componentItem)=> {
-            if (!componentItem.element._componentElement.isInitialized) {
-                if (componentItem.parent === null) {
-                    componentItem.element._componentElement.init();
-                }
-                else if (componentItem.parent._componentElement &&
-                    componentItem.parent._componentElement.isInitialized) {
-                    componentItem.element._componentElement.init();
-                }
+        this.newComponentElements = this.newComponentElements.filter((componentItem)=> {
+            if(componentItem.element._componentElement.isInitialized) {
+                return false;
             }
+            const isOrphan = componentItem.parent === null;
+            const isParentConstructed = componentItem.parent._componentElement;
+            const isParentInitiated = isParentConstructed && componentItem.parent._componentElement.isInitialized;
+            if(isOrphan || isParentInitiated) {
+                componentItem.element._componentElement.init();
+                return false;
+            }
+            return true;
         });
     }
 
@@ -148,6 +151,7 @@ export default class Root {
     addComponent(component, element, parent) {
         const componentItem = new ComponentItem(component, element);
         this.componentElements.push(componentItem);
+        this.newComponentElements.push(componentItem);
 
         this.componentElements.forEach((item) => {
             if (componentItem.parent === null && item.element === parent) {
