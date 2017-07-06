@@ -308,13 +308,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	    //Component Functions
-	    isInDome: function isInDome(element) {
-	        var parent = element.parentNode;
-	        while (parent && parent.tagName.toLowerCase() != 'body') {
-	            parent = parent.parentNode;
-	        }
-	        if (!parent) return false;
-	        return true;
+	    isInDOM: function isInDOM(element) {
+	        if (!element) return false;
+	        return document.body.contains(element);
 	    },
 	    isDeepNestedInSameComponent: function isDeepNestedInSameComponent(element) {
 	        var path = this.getComponentElementsPath(element, true, true);
@@ -648,15 +644,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var seq = this.config[sequence];
 	
 	            var promise = Promise;
-	            if (this.handleSequenceStep('pre', seq, params)) {
-	                promise.resolve().then(function () {
-	                    if (_this.handleSequenceStep(false, seq, params)) {
-	                        window.requestAnimationFrame(function () {
-	                            _this.handleSequenceStep('post', seq, params);
-	                        });
-	                    }
-	                });
-	            }
+	            return new Promise(function (resolve, reject) {
+	                if (_this.handleSequenceStep('pre', seq, params)) {
+	                    promise.resolve().then(function () {
+	                        if (_this.handleSequenceStep(false, seq, params)) {
+	                            window.requestAnimationFrame(function () {
+	                                _this.handleSequenceStep('post', seq, params);
+	                                resolve();
+	                            });
+	                        } else {
+	                            resolve();
+	                        }
+	                    });
+	                } else {
+	                    resolve();
+	                }
+	            });
 	        }
 	    }, {
 	        key: 'handleSequenceStep',
@@ -977,15 +980,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        this.originalInnerHTML = this.innerHTML;
 	                        this.innerHTML = '';
 	
-	                        Promise.resolve().then(function () {
-	                            if (!_utils2.default.isInDome(_this3)) return false;
-	                            if (_utils2.default.isDeepNestedInSameComponent(_this3)) {
-	                                root.logs.print({
-	                                    title: { content: 'WARNING - A Component Is Nested Inside Itself' },
-	                                    rows: [{ style: 'label', content: 'Components Path' }, { style: 'code', content: _utils2.default.getComponentElementsPath(_this3, true, true) }, { style: 'label', content: 'DOM Element' }, { content: _this3 }]
-	                                });
-	                                //return false;
-	                            }
+	                        var startComponentFromElement = function startComponentFromElement() {
+	                            //if(!common.isInDOM(this)) return false;
+	                            //if(common.isDeepNestedInSameComponent(this)) {
+	                            //    root.logs.print({
+	                            //        title: { content: 'WARNING - A Component Is Nested Inside Itself' },
+	                            //        rows: [
+	                            //            { style: 'label', content: 'Components Path' },
+	                            //            { style: 'code', content: common.getComponentElementsPath(this, true, true) },
+	                            //            { style: 'label', content: 'DOM Element' },
+	                            //            { content: this }
+	                            //        ]
+	                            //    });
+	                            //    //return false;
+	                            //}
 	                            var parent = _utils2.default.getParentComponentElement(_this3);
 	                            _this3._componentElement = {
 	                                isInitialized: false,
@@ -997,13 +1005,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                 * if not - will bind a new instance and trigger its 'initialize' method
 	                                 */
 	                                init: function init() {
-	                                    if (!_utils2.default.isInDome(_this3)) {
-	                                        _this3.component = false;
+	                                    if (!_utils2.default.isInDOM(_this3)) {
+	                                        //this.component = false;
 	                                        return;
 	                                    }
-	
-	                                    //const parent = common.getParentComponentElement(this);
-	                                    //this._componentElement.parent = parent;
 	
 	                                    var parentComponent = false;
 	                                    if (!_this3.component && parent) {
@@ -1032,8 +1037,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            } else {
 	                                _this3._componentElement.init();
 	                            }
-	                            root.componentElementAdded(_this3);
-	                        });
+	                            if (!_this3._componentElement.isInitialized) {
+	                                root.componentElementAdded(_this3);
+	                            }
+	                        };
+	
+	                        Promise.resolve().then(startComponentFromElement);
 	                    }
 	                }, {
 	                    key: 'disconnectedCallback',
@@ -1043,9 +1052,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            this.component.onDestroy();
 	                        }
 	                    }
-	                }, {
-	                    key: 'attributeChangedCallback',
-	                    value: function attributeChangedCallback() {}
 	                }]);
 	
 	                return HTMLComponent;
@@ -1206,6 +1212,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'resume',
 	        value: function resume(element) {
+	            var _this4 = this;
+	
 	            this.active = true;
 	            this.unbindEvents();
 	            this.scoped.element = element;
@@ -1218,14 +1226,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var isInitialHTMLChanged = this.scoped.html != this.scoped.element.originalInnerHTML;
 	            this.scoped.html = this.scoped.element.originalInnerHTML;
 	            this.scoped.children = this.scoped.element.originalChildren;
-	            this.scoped.element.innerHTML = this.currentHtml;
+	            //this.scoped.element.innerHTML = this.currentHtml;
 	            this.bindEvents();
 	            this.state.addRoutes();
 	            var localChanged = _utils4.default.setChanges(this.componentPrevProps, this.scoped.props);
 	            if (Object.keys(localChanged).length > 0 || isInitialHTMLChanged) {
-	                this.sequencer.startSequence('externalChange', [localChanged]);
+	                this.sequencer.startSequence('externalChange', [localChanged]).then(function () {
+	                    _this4.preventEmptyHtml();
+	                });
 	            } else {
-	                this.sequencer.startSequence('resume');
+	                this.sequencer.startSequence('resume').then(function () {
+	                    _this4.preventEmptyHtml();
+	                });
 	            }
 	        }
 	    }, {
@@ -1245,30 +1257,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'onStateChange',
 	        value: function onStateChange(changed) {
-	            this.sequencer.startSequence('localChange', [changed]);
+	            var _this5 = this;
+	
+	            this.sequencer.startSequence('localChange', [changed]).then(function () {
+	                _this5.preventEmptyHtml();
+	            });
 	        }
 	    }, {
 	        key: 'onReferenceChange',
 	        value: function onReferenceChange(changed) {
+	            var _this6 = this;
+	
 	            var localChanged = this.state.getReferenceStatePropNames(changed);
-	            this.sequencer.startSequence('referenceChange', [localChanged]);
+	            this.sequencer.startSequence('referenceChange', [localChanged]).then(function () {
+	                _this6.preventEmptyHtml();
+	            });
 	        }
 	    }, {
 	        key: 'onGlobalStateChange',
 	        value: function onGlobalStateChange(data, changed) {
-	            var _this4 = this;
+	            var _this7 = this;
 	
 	            var localChanged = this.state.getGlobalStatePropNames(data, changed);
 	            Object.assign(this.collectedDataChanges, localChanged);
 	            clearTimeout(this.timer);
 	            this.timer = setTimeout(function () {
-	                _this4.debounceGlobalStateChange();
+	                _this7.debounceGlobalStateChange();
 	            }, 10);
 	        }
 	    }, {
 	        key: 'debounceGlobalStateChange',
 	        value: function debounceGlobalStateChange() {
-	            this.sequencer.startSequence('globalChange', [this.collectedDataChanges]);
+	            var _this8 = this;
+	
+	            this.sequencer.startSequence('globalChange', [this.collectedDataChanges]).then(function () {
+	                _this8.preventEmptyHtml();
+	            });
 	            this.timer = null;
 	            this.collectedDataChanges = {};
 	        }
@@ -1286,11 +1310,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'onRender',
 	        value: function onRender(html) {
-	            if (!html || typeof html != 'string') {
-	                return;
-	            }
-	            if (html != this.currentHtml) {
+	            var isValid = html && typeof html === 'string';
+	            var isDifferent = html != this.currentHtml;
+	            if (isValid && isDifferent) {
 	                this.scoped.element.innerHTML = this.currentHtml = html;
+	                this.bindEvents();
+	                this.onDescendantChange();
+	            } else {
+	                this.preventEmptyHtml();
+	            }
+	        }
+	    }, {
+	        key: 'preventEmptyHtml',
+	        value: function preventEmptyHtml() {
+	            if (!this.scoped.element.innerHTML && this.currentHtml) {
+	                this.scoped.element.innerHTML = this.currentHtml;
 	                this.bindEvents();
 	            }
 	        }
@@ -1476,8 +1510,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-	
 	var defaultSegregation = {
 	    local: {},
 	    external: {},
@@ -1528,6 +1560,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                title: { content: 'Trying To Reach An Undefined Data' },
 	                rows: [{ style: 'label', content: 'Data Id' }, { style: 'code', content: dataName }]
 	            });
+	            _props[prop] = null;
 	        } else {
 	            _props[prop] = root.datas[dataName].getProp(dataKey);
 	        }
@@ -1591,10 +1624,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	var changeBindedProps = function changeBindedProps(state, props) {
+	    var states = [];
+	    var statesData = [];
+	
 	    var _loop = function _loop(prop) {
 	        if (state.bindings[prop]) {
 	            state.bindings[prop].forEach(function (bindedState) {
-	                bindedState.component.onReferenceChange(_defineProperty({}, prop, props[prop]));
+	                var stateIndex = states.indexOf(bindedState);
+	                if (stateIndex === -1) {
+	                    states.push(bindedState);
+	                    stateIndex = states.length - 1;
+	                    statesData[stateIndex] = {};
+	                }
+	                statesData[stateIndex][prop] = props[prop];
 	            });
 	        }
 	    };
@@ -1602,6 +1644,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var prop in props) {
 	        _loop(prop);
 	    }
+	    states.forEach(function (state, index) {
+	        state.component.onReferenceChange(statesData[index]);
+	    });
 	};
 	
 	/**
@@ -1636,19 +1681,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        };
 	        this.scoped.setGlobalProps = function (props) {
+	            var newGlobalProps = {};
 	            for (var prop in props) {
 	                var globalDef = props[prop];
 	                var isPreviouslyDefined = _this2.definition.props.global[prop];
 	                var isInvalidDefinition = globalDef === null || (typeof globalDef === 'undefined' ? 'undefined' : _typeof(globalDef)) !== 'object';
-	                var newGlobalProps = {};
 	                if (isInvalidDefinition && isPreviouslyDefined) {
 	                    delete _this2.definition.props.global[prop];
 	                } else if (!isInvalidDefinition) {
 	                    _this2.definition.props.global[prop] = newGlobalProps[prop] = props[prop];
 	                }
-	                _this2.component.mapItem.setSelfGlobal(newGlobalProps);
-	                _this2.updateGlobalProps();
 	            }
+	            _this2.component.mapItem.setSelfGlobal(newGlobalProps);
+	            _this2.updateGlobalProps();
+	            _this2.component.updateState();
 	        };
 	        this.scoped.setGlobalMethods = function (props) {
 	            for (var prop in props) {
@@ -1779,15 +1825,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: function updateLocalProps(changed) {
 	            for (var prop in changed) {
 	                this.scoped.props.local[prop] = changed[prop].newValue;
-	                changeBindedProps(this, changed);
 	            }
+	            changeBindedProps(this, changed);
 	        }
 	    }, {
 	        key: 'updateReferencedProps',
 	        value: function updateReferencedProps() {
-	            var _this3 = this;
-	
 	            if (!this.reference.parent) return;
+	            var extractRelevantValue = function extractRelevantValue(refProp) {
+	                var parentStateKey = refProp.key;
+	                var path = void 0;
+	                if (parentStateKey.indexOf('.') >= 0) {
+	                    path = parentStateKey.split('.');
+	                }
+	                var state = refProp.state;
+	                if (path) {
+	                    var statePosition = state;
+	                    while (path.length) {
+	                        var position = path[0];
+	                        statePosition = statePosition[position];
+	                        path.shift();
+	                    }
+	                    return statePosition;
+	                } else {
+	                    return state[parentStateKey];
+	                }
+	            };
 	            var props = {
 	                global: {},
 	                external: {},
@@ -1795,32 +1858,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            };
 	            props.global = _buildGlobalProps(this.reference.global, this.root);
 	            for (var prop in this.reference.external) {
-	                var parentStateKey = this.reference.external[prop].key;
-	                props.external[prop] = this.reference.parent.scoped.props.external[parentStateKey];
+	                props.external[prop] = extractRelevantValue(this.reference.external[prop]);
 	            }
-	
-	            var _loop2 = function _loop2(_prop) {
-	                var bindToRelevantAncestor = function bindToRelevantAncestor(node, prop) {
-	                    if (!node) {
-	                        return null;
-	                    }
-	                    if (!node.reference.local[prop]) {
-	                        if (node.scoped.props.local[prop]) {
-	                            return node.scoped.props.local[prop];
-	                        }
-	                        return bindToRelevantAncestor(node.reference.parent, prop);
-	                    }
-	                    var parentStateKey = node.reference.local[prop].key;
-	                    if (node.reference.parent.scoped.props.local[parentStateKey]) {
-	                        return node.reference.parent.scoped.props.local[parentStateKey];
-	                    }
-	                    return bindToRelevantAncestor(node.reference.parent, parentStateKey);
-	                };
-	                props.local[_prop] = bindToRelevantAncestor(_this3, _prop);
-	            };
-	
 	            for (var _prop in this.reference.local) {
-	                _loop2(_prop);
+	                props.local[_prop] = extractRelevantValue(this.reference.local[_prop]);
 	            }
 	            var flatProps = Object.assign({}, props.local, props.external, props.global);
 	            Object.assign(this.scoped.props.external, flatProps);
@@ -1836,10 +1877,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'buildGlobalMethods',
 	        value: function buildGlobalMethods() {
-	            var _this4 = this;
+	            var _this3 = this;
 	
-	            var _loop3 = function _loop3(methodName) {
-	                _this4.scoped.methods.global[methodName] = function () {
+	            var _loop2 = function _loop2(methodName) {
+	                _this3.scoped.methods.global[methodName] = function () {
 	                    var originalArgs = [].slice.call(arguments);
 	                    var mergedArgs = [this.definition.methods.global[methodName].modifier, this.definition.methods.global[methodName].key];
 	                    if (this.definition.methods.global[methodName].pass) {
@@ -1850,11 +1891,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        mergedArgs = mergedArgs.concat(originalArgs);
 	                        this.root.executeModifier.apply(this.root, mergedArgs);
 	                    }
-	                }.bind(_this4);
+	                }.bind(_this3);
 	            };
 	
 	            for (var methodName in this.definition.methods.global) {
-	                _loop3(methodName);
+	                _loop2(methodName);
 	            }
 	        }
 	
@@ -1919,7 +1960,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'setExternalReferencedProperty',
 	        value: function setExternalReferencedProperty(item, externalReferences, parentState) {
-	            var _this5 = this;
+	            var _this4 = this;
+	
+	            var passedExternalReference = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 	
 	            var key = item.name;
 	            var path = item.value.split('.');
@@ -1927,47 +1970,62 @@ return /******/ (function(modules) { // webpackBootstrap
 	            path.shift();
 	            path = path.join('.');
 	
-	            if (externalReferences.parent.reference.global.hasOwnProperty(stateKey)) {
-	                externalReferences.global[key] = externalReferences.parent.reference.global[stateKey];
+	            if (!passedExternalReference) {
+	                passedExternalReference = externalReferences;
+	            }
+	            if (!passedExternalReference.parent) {
+	                return false;
+	            }
+	
+	            if (passedExternalReference.parent.reference.global.hasOwnProperty(stateKey)) {
+	                externalReferences.global[key] = passedExternalReference.parent.reference.global[stateKey];
 	                if (path) {
 	                    externalReferences.global[key].key += '.' + path;
 	                }
-	            } else if (externalReferences.parent.reference.external.hasOwnProperty(stateKey)) {
-	                externalReferences.external[key] = externalReferences.parent.reference.external[item.value];
-	            } else if (externalReferences.parent.reference.local.hasOwnProperty(stateKey)) {
+	            } else if (passedExternalReference.parent.reference.external.hasOwnProperty(stateKey)) {
+	                externalReferences.external[key] = passedExternalReference.parent.reference.external[item.value];
+	            } else if (passedExternalReference.parent.reference.local.hasOwnProperty(stateKey)) {
 	                (function () {
-	                    externalReferences.local[key] = externalReferences.parent.reference.local[item.value];
+	                    externalReferences.local[key] = passedExternalReference.parent.reference.local[item.value];
 	                    var bindToRelevantAncestor = function bindToRelevantAncestor(node, prop) {
 	                        if (!node) {
 	                            return null;
 	                        }
 	                        if (!node.reference.local[prop]) {
 	                            if (node.scoped.props.local[prop]) {
-	                                node.bind(prop, _this5);
+	                                node.bind(prop, _this4);
 	                            } else {
 	                                bindToRelevantAncestor(node.reference.parent, prop);
 	                            }
 	                        } else {
 	                            var parentStateKey = node.reference.local[prop].key;
 	                            if (node.reference.parent.scoped.props.local[parentStateKey]) {
-	                                node.reference.parent.bind(parentStateKey, _this5);
+	                                node.reference.parent.bind(parentStateKey, _this4);
 	                            } else {
 	                                bindToRelevantAncestor(node.reference.parent, parentStateKey);
 	                            }
 	                        }
 	                    };
-	                    bindToRelevantAncestor(externalReferences.parent, stateKey);
+	                    bindToRelevantAncestor(passedExternalReference.parent, stateKey);
 	                })();
-	            } else if (externalReferences.parent.scoped.props.global.hasOwnProperty(stateKey)) {
+	            } else if (passedExternalReference.parent.scoped.props.global.hasOwnProperty(stateKey)) {
 	                externalReferences.global[key] = parentState.getGlobalDef()[stateKey];
 	                if (path) {
 	                    externalReferences.global[key].key += '.' + path;
 	                }
-	            } else if (externalReferences.parent.scoped.props.external.hasOwnProperty(stateKey)) {
-	                externalReferences.external[key] = { key: item.value };
-	            } else {
-	                externalReferences.local[key] = { key: item.value };
+	            } else if (passedExternalReference.parent.scoped.props.external.hasOwnProperty(stateKey)) {
+	                externalReferences.external[key] = {
+	                    key: item.value,
+	                    state: passedExternalReference.parent.scoped.props.external
+	                };
+	            } else if (passedExternalReference.parent.scoped.props.local.hasOwnProperty(stateKey)) {
+	                externalReferences.local[key] = {
+	                    key: item.value,
+	                    state: passedExternalReference.parent.scoped.props.local
+	                };
 	                parentState.bind(stateKey, this);
+	            } else {
+	                this.setExternalReferencedProperty(item, externalReferences, parentState.component.parent.component.state, passedExternalReference.parent.reference);
 	            }
 	        }
 	    }, {
@@ -2011,6 +2069,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'bind',
 	        value: function bind(prop, state) {
+	            if (prop.indexOf('.') >= 0) {
+	                path = prop.split('.');
+	                prop = prop[0];
+	            }
 	            if (!this.bindings[prop]) {
 	                this.bindings[prop] = [];
 	            }
@@ -2019,11 +2081,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'addRoutes',
 	        value: function addRoutes() {
-	            var _this6 = this;
+	            var _this5 = this;
 	
 	            if (this.definition.routes) {
 	                this.definition.routes.forEach(function (i) {
-	                    return _this6.root.router.add(i, _this6.scoped);
+	                    return _this5.root.router.add(i, _this5.scoped);
 	                });
 	            }
 	        }
@@ -2252,7 +2314,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            title: { content: 'Could Not Find a Requested Data Property' },
 	                            rows: [{ style: 'label', content: 'Data Id' }, { style: 'code', content: this.definition.id }, { style: 'label', content: 'Properties Path' }, { style: 'code', content: prop }, { style: 'label', content: 'Data (snapshot)' }, { style: 'code', content: _utils2.default.clone(this.data) }]
 	                        });
-	                        return undefined;
+	                        return null;
 	                    }
 	                    value = value[props[i]];
 	                }
@@ -2829,16 +2891,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }]
 	    },
 	    resume: {
-	        //retrieve: function (step, hook, res) {
-	        //    if (step.target === 'component') {
-	        //        this.base.onRender(res);
-	        //    }
-	        //},
 	        send: function send(step, hook) {
 	            if (step.target === 'component') {
 	                this.base.updateState();
 	            }
 	            return [true];
+	        },
+	        retrieve: function retrieve(step, hook, res) {
+	            if (step.target === 'component') {
+	                this.base.onRender(res);
+	            }
 	        },
 	        sequence: [{
 	            target: 'state',
@@ -2863,9 +2925,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        retrieve: function retrieve(step, hook, res) {
 	            if (step.target === 'component') {
 	                this.base.onRender(res);
-	                if (hook === 'post') {
-	                    this.base.onDescendantChange();
-	                }
 	            }
 	        },
 	        sequence: [{
@@ -2886,9 +2945,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        retrieve: function retrieve(step, hook, res) {
 	            if (step.target === 'component') {
 	                this.base.onRender(res);
-	                if (hook === 'post') {
-	                    this.base.onDescendantChange();
-	                }
 	            }
 	        },
 	        sequence: [{
@@ -2914,9 +2970,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        retrieve: function retrieve(step, hook, res) {
 	            if (step.target === 'component') {
 	                this.base.onRender(res);
-	                if (hook === 'post') {
-	                    this.base.onDescendantChange();
-	                }
 	            }
 	        },
 	        sequence: [{
@@ -3092,6 +3145,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.components = [];
 	        this.componentsDefinition = [];
 	        this.componentElements = [];
+	        this.newComponentElements = [];
 	        this.modifiersDefinition = [];
 	        this.router = router;
 	        this.logs = new _logs2.default();
@@ -3186,14 +3240,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'componentElementAdded',
 	        value: function componentElementAdded() {
-	            this.componentElements.forEach(function (componentItem) {
-	                if (!componentItem.element._componentElement.isInitialized) {
-	                    if (componentItem.parent === null) {
-	                        componentItem.element._componentElement.init();
-	                    } else if (componentItem.parent._componentElement && componentItem.parent._componentElement.isInitialized) {
-	                        componentItem.element._componentElement.init();
-	                    }
+	            this.newComponentElements = this.newComponentElements.filter(function (componentItem) {
+	                if (componentItem.element._componentElement.isInitialized) {
+	                    return false;
 	                }
+	                var isOrphan = componentItem.parent === null;
+	                var isParentConstructed = componentItem.parent._componentElement;
+	                var isParentInitiated = isParentConstructed && componentItem.parent._componentElement.isInitialized;
+	                if (isOrphan || isParentInitiated) {
+	                    componentItem.element._componentElement.init();
+	                    return false;
+	                }
+	                return true;
 	            });
 	        }
 	
@@ -3211,6 +3269,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: function addComponent(component, element, parent) {
 	            var componentItem = new _componentMapping.ComponentItem(component, element);
 	            this.componentElements.push(componentItem);
+	            this.newComponentElements.push(componentItem);
 	
 	            this.componentElements.forEach(function (item) {
 	                if (componentItem.parent === null && item.element === parent) {
