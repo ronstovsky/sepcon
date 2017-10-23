@@ -202,9 +202,7 @@ export default class ComponentDefinition {
                     else {
                         this._componentElement.init();
                     }
-                    if(!this._componentElement.isInitialized) {
-                        root.componentElementAdded(this);
-                    }
+                    root.componentElementAdded(this);
                 };
 
                 Promise.resolve().then(startComponentFromElement);

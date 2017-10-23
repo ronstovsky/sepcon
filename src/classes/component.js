@@ -188,7 +188,7 @@ export default class Component {
     }
 
     onRender(html) {
-        const isValid = html && typeof html === 'string';
+        const isValid = typeof html === 'string';
         const isDifferent = html != this.currentHtml;
         if(isValid && isDifferent) {
             this.scoped.element.innerHTML = this.currentHtml = html;

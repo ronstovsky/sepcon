@@ -15,12 +15,10 @@ describe('Component Unit', ()=>{
                 state: {
                     change(changed) {
                         if (changed.check) {
+                            expect(changed.check.newValue).to.be.equal(1);
                             done();
                         }
                     }
-                },
-                render() {
-                    return `check: ${this.props.check}`;
                 }
             }
         });
@@ -44,12 +42,139 @@ describe('Component Unit', ()=>{
                     const childElement = child.createTag()
                         .refProps({check: 'passedProp'});
                     expect(this.props.passedProp).to.be.equal(0);
-                    return `passedProp: ${this.props.passedProp} => ${childElement.render()}`;
+                    return childElement.render();
                 }
             }
         });
         let DIV = document.createElement('div');
         DIV.innerHTML = parent.createTag().render();
+        document.getElementById('ui-tests').appendChild(DIV);
+    });
+
+    it('should change reference properties if changed at parent - also for "sub" properties', (done) => {
+        const child = scope.createComponent({
+            id: 'test-'+testNum+'-child',
+            component: {
+                state: {
+                    change(changed) {
+                        if (changed.check) {
+                            expect(changed.check.newValue).to.be.equal(1);
+                            done();
+                        }
+                    }
+                }
+            }
+        });
+        const parent = scope.createComponent({
+            id: 'test-'+testNum+'-parent',
+            component: {
+                state: {
+                    props: {
+                        local: {
+                            mainObj: {
+                                passedProp: 0
+                            }
+                        }
+                    },
+                    'post:mount'() {
+                        let mainObj = {
+                            passedProp: this.props.local.mainObj.passedProp + 1
+                        };
+                        this.setProps({mainObj}, true);
+                    },
+                    change() {
+                        return false;
+                    }
+                },
+                render() {
+                    const childElement = child.createTag()
+                        .refProps({check: 'mainObj.passedProp'});
+                    expect(this.props.mainObj.passedProp).to.be.equal(0);
+                    return childElement.render();
+                }
+            }
+        });
+        let DIV = document.createElement('div');
+        DIV.innerHTML = parent.createTag().render();
+        document.getElementById('ui-tests').appendChild(DIV);
+    });
+
+    it('should change reference properties if changed at grandparent - "sub"/normal properties as well', (done) => {
+        const child = scope.createComponent({
+            id: 'test-'+testNum+'-child',
+            component: {
+                state: {
+                    change(changed) {
+                        if (changed.checkChild1) {
+                            expect(changed.checkChild1.newValue).to.be.equal(1);
+                            expect(changed.checkChild2.newValue).to.be.equal('b');
+                            done();
+                        }
+                    }
+                }
+            }
+        });
+        const parent = scope.createComponent({
+            id: 'test-'+testNum+'-parent',
+            component: {
+                state: {
+                    change(changed) {
+                        if (changed.checkParent1) {
+                            expect(changed.checkParent1.newValue).to.be.equal(1);
+                            expect(changed.checkParent2.newValue).to.be.equal('b');
+                            //done();
+                        }
+                    }
+                },
+                render() {
+                    const childElement = child.createTag()
+                        .refProps({
+                            checkChild1: 'checkParent1',
+                            checkChild2: 'checkParent2'
+                        });
+                    return childElement.render();
+                }
+            }
+        });
+        const grandparent = scope.createComponent({
+            id: 'test-'+testNum+'-grandparent',
+            component: {
+                state: {
+                    props: {
+                        local: {
+                            mainObj: {
+                                passedProp: 0
+                            },
+                            mainProp: 'a'
+                        }
+                    },
+                    'post:mount'() {
+                        let mainObj = {
+                            passedProp: this.props.local.mainObj.passedProp + 1
+                        };
+                        this.setProps({
+                            mainObj,
+                            mainProp: 'b'
+                        }, true);
+                    },
+                    change() {
+                        return false;
+                    }
+                },
+                render() {
+                    const parentElement = parent.createTag()
+                        .refProps({
+                            checkParent1: 'mainObj.passedProp',
+                            checkParent2: 'mainProp'
+                        });
+                    expect(this.props.mainObj.passedProp).to.be.equal(0);
+                    expect(this.props.mainProp).to.be.equal('a');
+                    return parentElement.render();
+                }
+            }
+        });
+        let DIV = document.createElement('div');
+        DIV.innerHTML = grandparent.createTag().render();
         document.getElementById('ui-tests').appendChild(DIV);
     });
 
@@ -72,7 +197,7 @@ describe('Component Unit', ()=>{
                     const childElement = child.createTag()
                         .refProps({check: 'passedProp'});
                     expect(this.props.passedProp).to.be.equal(1);
-                    return `passedProp: ${this.props.passedProp} => ${childElement.render()}`;
+                    return childElement.render();
                 }
             }
         });
@@ -205,7 +330,7 @@ describe('Component Unit', ()=>{
                     }
                 },
                 render(changed) {
-                    if(changed) {
+                    if(changed && changed.prop) {
                         console.log('123');
                         expect(this.props.prop).to.be.equal(2);
                         done();

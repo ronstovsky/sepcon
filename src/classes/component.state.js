@@ -122,10 +122,11 @@ const chainMethods = (methods, seg, name) => {
     return method;
 };
 
-const changeBindedProps = (state, props) => {
+const changeBindedProps = (state, source, props, changed) => {
     let states = [];
     let statesData = [];
-    for (let prop in props) {
+    const changesFullPath = changes.setChanges(source, props);
+    for (let prop in changesFullPath) {
         if (state.bindings[prop]) {
             state.bindings[prop].forEach((bindedState) => {
                 let stateIndex = states.indexOf(bindedState);
@@ -134,7 +135,7 @@ const changeBindedProps = (state, props) => {
                     stateIndex = states.length - 1;
                     statesData[stateIndex] = {};
                 }
-                statesData[stateIndex][prop] = props[prop];
+                statesData[stateIndex][prop] = changesFullPath[prop];
             });
         }
     }
@@ -159,10 +160,12 @@ export default class ComponentState {
         this.buildGlobalMethods();
 
         this.scoped.setProps = (props, silent) => {
+            const originalProps = common.clone(this.scoped.props.local);
             const changedProps = changes.setChanges(this.scoped.props.local, props, silent, true);
+
             if (Object.keys(changedProps).length > 0) {
                 if (silent) {
-                    this.updateLocalProps(changedProps);
+                    changeBindedProps(this, originalProps, this.scoped.props.local, changedProps);
                     this.component.updateState();
                     return;
                 }
@@ -300,10 +303,11 @@ export default class ComponentState {
 
 
     updateLocalProps(changed) {
+        const originalProps = common.clone(this.scoped.props.local);
         for (let prop in changed) {
             this.scoped.props.local[prop] = changed[prop].newValue;
         }
-        changeBindedProps(this, changed);
+        changeBindedProps(this, originalProps, this.scoped.props.local, changed);
     }
 
     updateReferencedProps() {
@@ -459,9 +463,11 @@ export default class ComponentState {
                     }
                 }
                 else {
-                    const parentStateKey = node.reference.local[prop].key;
+                    let parentPath = node.reference.local[prop].key.split('.');
+                    const parentStateKey = parentPath[0];
+                    parentPath = parentPath.join('.');
                     if (node.reference.parent.scoped.props.local[parentStateKey]) {
-                        node.reference.parent.bind(parentStateKey, this);
+                        node.reference.parent.bind(parentPath, this);
                     }
                     else {
                         bindToRelevantAncestor(node.reference.parent, parentStateKey);
@@ -487,7 +493,12 @@ export default class ComponentState {
                 key: item.value,
                 state: passedExternalReference.parent.scoped.props.local
             };
-            parentState.bind(stateKey, this);
+            if(path) {
+                parentState.bind(stateKey + '.' + path, this);
+            }
+            else {
+                parentState.bind(stateKey, this);
+            }
         }
         else {
             this.setExternalReferencedProperty(item, externalReferences, parentState.component.parent.component.state, passedExternalReference.parent.reference);
@@ -529,10 +540,6 @@ export default class ComponentState {
     }
 
     bind(prop, state) {
-        if(prop.indexOf('.') >= 0) {
-            path = prop.split('.');
-            prop = prop[0];
-        }
         if(!this.bindings[prop]) {
             this.bindings[prop] = [];
         }

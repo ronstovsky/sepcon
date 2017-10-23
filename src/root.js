@@ -126,17 +126,18 @@ export default class Root {
      */
     componentElementAdded() {
         this.newComponentElements = this.newComponentElements.filter((componentItem)=> {
-            if(componentItem.element._componentElement.isInitialized) {
-                return false;
+            if (!componentItem.element._componentElement.isInitialized) {
+                if (componentItem.parent === null) {
+                    componentItem.element._componentElement.init();
+                    return false;
+                }
+                else if (componentItem.parent._componentElement &&
+                    componentItem.parent._componentElement.isInitialized) {
+                    componentItem.element._componentElement.init();
+                    return false;
+                }
+                return true;
             }
-            const isOrphan = componentItem.parent === null;
-            const isParentConstructed = componentItem.parent._componentElement;
-            const isParentInitiated = isParentConstructed && componentItem.parent._componentElement.isInitialized;
-            if(isOrphan || isParentInitiated) {
-                componentItem.element._componentElement.init();
-                return false;
-            }
-            return true;
         });
     }
 
