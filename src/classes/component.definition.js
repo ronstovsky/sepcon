@@ -9,8 +9,6 @@ export default class ComponentDefinition {
         let definition = def.component;
         if(def.extend) {
             definition = common.extend(def.extend, def.component);
-            definition.super = def.extend;
-            definition.state.super = def.extend.state;
         }
         this.definition = definition;
         this.root = root;
@@ -145,18 +143,6 @@ export default class ComponentDefinition {
 
                 const startComponentFromElement = () => {
                     //if(!common.isInDOM(this)) return false;
-                    //if(common.isDeepNestedInSameComponent(this)) {
-                    //    root.logs.print({
-                    //        title: { content: 'WARNING - A Component Is Nested Inside Itself' },
-                    //        rows: [
-                    //            { style: 'label', content: 'Components Path' },
-                    //            { style: 'code', content: common.getComponentElementsPath(this, true, true) },
-                    //            { style: 'label', content: 'DOM Element' },
-                    //            { content: this }
-                    //        ]
-                    //    });
-                    //    //return false;
-                    //}
                     let parent = common.getParentComponentElement(this);
                     this._componentElement = {
                         isInitialized: false,
@@ -208,7 +194,6 @@ export default class ComponentDefinition {
                 Promise.resolve().then(startComponentFromElement);
             }
             disconnectedCallback() {
-                //root.removeComponentInstance(this.component.id);
                 if(this.component) {
                     this.component.onDestroy();
                 }

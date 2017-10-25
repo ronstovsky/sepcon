@@ -113,18 +113,18 @@ describe('Component Extension', ()=>{
                         }
                     },
                     mount() {
-                        expect(this.super).to.have.property('mount');
-                        expect(this.super.methods.local).to.have.property('printNumber');
-                        expect(this.super.methods.local).to.have.property('printText');
-                        this.super.mount.apply(this, arguments);
+                        expect(parent.proto.state).to.have.property('mount');
+                        expect(parent.proto.state.methods.local).to.have.property('printNumber');
+                        expect(parent.proto.state.methods.local).to.have.property('printText');
+                        parent.proto.state.mount.apply(this, arguments);
                     }
                 },
                 render() {
-                    expect(this.super).to.be.an('object');
-                    expect(this.super).to.have.property('render');
-                    expect(this.super.render).to.not.equal(this.render);
+                    expect(parent.proto).to.be.an('object');
+                    expect(parent.proto).to.have.property('render');
+                    expect(parent.proto.render).to.not.equal(this.render);
                     this.methods.done();
-                    return `${this.props.array.length} ${this.super.render.apply(this, arguments)}`;
+                    return `${this.props.array.length} ${parent.proto.render.apply(this, arguments)}`;
                 }
             }
         });
@@ -146,7 +146,7 @@ describe('Component Extension', ()=>{
                     methods: {
                         local: {
                             printText() {
-                                return this.super.methods.local.printText.apply(this, arguments);
+                                return parent.proto.state.methods.local.printText.apply(this, arguments);
                             }
                         }
                     },
@@ -167,6 +167,58 @@ describe('Component Extension', ()=>{
 
         let DIV = document.createElement('div');
         DIV.innerHTML = child.createTag()
+            .methods({
+                done
+            })
+            .render();
+        document.getElementById('ui-tests').appendChild(DIV);
+    });
+    it('should call inherited methods on a 2nd extended child component', function(done) {
+        const child = scope.createComponent({
+            id: 'child' + testNum,
+            extend: parent.id,
+            component: {
+                state: {
+                    methods: {
+                        local: {
+                            printText() {
+                                return parent.proto.state.methods.local.printText.apply(this, arguments);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log(child);
+        const grandchild = scope.createComponent({
+            id: 'grandchild' + testNum,
+            extend: child.id,
+            component: {
+                state: {
+                    methods: {
+                        local: {
+                            printText() {
+                                return child.proto.state.methods.local.printText.apply(this, arguments);
+                            }
+                        }
+                    },
+                    mount() {
+                        this.setProps({
+                            text: 'Hello',
+                            number: 15
+                        }, true);
+                    }
+                },
+                render() {
+                    expect(this.methods.printText()).to.be.equal('Hello');
+                    expect(this.methods.printNumber()).to.be.equal(15);
+                    this.methods.done();
+                }
+            }
+        });
+
+        let DIV = document.createElement('div');
+        DIV.innerHTML = grandchild.createTag()
             .methods({
                 done
             })

@@ -5,7 +5,6 @@ export default class Service {
         let definition = def.service;
         if (def.extend) {
             definition = common.extend(def.extend, def.service);
-            definition.super = def.extend;
         }
         this.definition = definition;
         this.id = def.id;
@@ -36,10 +35,4 @@ export default class Service {
             this.definition.routes.forEach(i => this.root.router.add(i, this.scoped));
         }
     }
-
-    //updateProps(changed) {
-    //    for (let prop in changed) {
-    //        this.scoped.props[prop] = changed[prop].newValue;
-    //    }
-    //}
 }

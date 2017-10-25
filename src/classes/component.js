@@ -19,9 +19,6 @@ export default class Component {
         this.scoped.bindEvents = () => this.bindEvents();
 
         delete this.scoped.state;
-        if(this.scoped.super) {
-            delete this.scoped.super.state;
-        }
 
         this.parent = parent;
 

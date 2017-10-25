@@ -17,7 +17,7 @@ describe('Modifier Extension', ()=>{
     });
 
     it('should remain parent methods', function(done) {
-        scope.createModifier({
+        const parent = scope.createModifier({
             id: 'parent'+testNum,
             modifier: {
                 methods: {
@@ -39,11 +39,11 @@ describe('Modifier Extension', ()=>{
         });
         scope.createModifier({
             id: 'child'+testNum,
-            extend: 'parent'+testNum,
+            extend: parent.id,
             modifier: {
                 methods: {
                     updateNumber() {
-                        this.super.methods.updateNumber.apply(this, arguments);
+                        parent.proto.methods.updateNumber.apply(this, arguments);
                     }
                 }
             }

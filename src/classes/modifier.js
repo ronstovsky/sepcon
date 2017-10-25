@@ -6,7 +6,6 @@ export default class Modifier {
         let definition = def.modifier;
         if(def.extend) {
             definition = common.extend(def.extend, def.modifier);
-            definition.super = def.extend;
         }
         this.definition = definition;
         this.id = def.id;

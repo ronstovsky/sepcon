@@ -33,7 +33,7 @@ function create(def, type, defs, cls) {
                 });
             }
             else {
-                definition.extend = defs[definition.extend].definition;
+                definition.extend = common.clone(defs[definition.extend].definition);
             }
         }
         if(definition.decorators) {
@@ -59,7 +59,10 @@ function create(def, type, defs, cls) {
         }
         defs[definition.id] = new cls(definition, this.root);
     }
-    return defs[definition.id];
+    return {
+        id: definition.id,
+        proto: defs[definition.id].definition
+    };
 }
 
 class SepConClass {
@@ -115,11 +118,10 @@ class SepConClass {
         return create.call(this, def, 'service', def.provider ? this.root.providers[def.provider].services : this.root.services, this.root.classes.Service);
     }
     createComponent(def) {
-        create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
-        return {
-            id: def.id,
+        let created = create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
+        return Object.assign(created, {
             createTag: () => this.createTag(def.id)
-        };
+        });
     }
     createTag(id) {
         return new this.root.classes.ComponentTag(this, id);
