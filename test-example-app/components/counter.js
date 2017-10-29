@@ -16,17 +16,19 @@ export default SepCon.createComponent({
                 }
             },
         },
-        'render'() {
-            const button = DescribedButton.createTag()
-                .props({label: 'This is a simple counter button'})
-                .refMethods({onclick: 'increase'});
+        view: {
+            'render'() {
+                const button = DescribedButton.createTag()
+                    .props({label: 'This is a simple counter button'})
+                    .refMethods({onclick: 'increase'});
 
-            return `
-        <div class="sepcon sepcon-component">
-            ${button.render('open')}
-                <div>Clicked <span class="underline">${this.props.count}</span> times</div>
-            ${button.render('close')}
-        </div>`;
+                return `
+                    <div class="sepcon sepcon-component">
+                        ${button.render('open')}
+                            <div>Clicked <span class="underline">${this.props.count}</span> times</div>
+                        ${button.render('close')}
+                    </div>`;
+            }
         },
         increaseCounter(e) {
             e.preventDefault();

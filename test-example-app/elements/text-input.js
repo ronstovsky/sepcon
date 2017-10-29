@@ -43,24 +43,26 @@ export default SepCon.createComponent({
                 this.setProps({currentValue: this.props.external.value}, true);
             }
         },
-        'events': [
-            {event: 'keyup', selector: 'input', callback: 'handleChange'},
-            {event: 'focus', selector: 'input', callback: 'handleFocus'},
-            {event: 'blur', selector: 'input', callback: 'handleBlur'},
-        ],
-        'render'() {
-            return `<div class="sepcon sepcon-element">
+        view: {
+            events: [
+                {event: 'keyup', selector: 'input', callback: 'handleChange'},
+                {event: 'focus', selector: 'input', callback: 'handleFocus'},
+                {event: 'blur', selector: 'input', callback: 'handleBlur'},
+            ],
+            render() {
+                return `<div class="sepcon sepcon-element">
                 <input name="${this.props.name}" value="${this.props.currentValue}"/>
             </div>`;
-        },
-        handleChange(e) {
-            this.methods.onchange(e.target.value);
-        },
-        handleFocus(e) {
-            this.methods.onfocus();
-        },
-        handleBlur(e) {
-            this.methods.onblur();
+            },
+            handleChange(e) {
+                this.methods.onchange(e.target.value);
+            },
+            handleFocus(e) {
+                this.methods.onfocus();
+            },
+            handleBlur(e) {
+                this.methods.onblur();
+            }
         }
     }
 });

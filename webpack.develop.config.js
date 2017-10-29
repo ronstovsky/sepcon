@@ -3,11 +3,11 @@ const webpack = require("webpack");
 module.exports = {
     entry: {
         sepcon: ['./src/index.js'],
-        example: ['./app/index.js'],
+        example: ['./test-example-app/index.js'],
         tests: ['./test/tests.js']
     },
     output: {
-        path: '/app',
+        path: '/test-example-app',
         publicPath: '/',
         filename: '[name].js',
     },

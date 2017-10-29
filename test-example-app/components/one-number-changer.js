@@ -91,53 +91,55 @@ export default SepCon.createComponent({
                 }, true);
             }
         },
-        'render'() {
-            let indexOptions = [];
-            for (let i = 0, e = this.props.indexes.length; i < e; i++) {
-                indexOptions[i] = {
-                    value: this.props.indexes[i],
-                    label: this.props.indexes[i],
-                };
-            }
-            const select = Select.createTag()
-                .props({
-                    name: 'changeIndex',
-                    options: indexOptions,
-                    selected: this.props.selected,
-                })
-                .refMethods({
-                    onchange: 'setNewIndex',
-                });
+        view: {
+            'render'() {
+                let indexOptions = [];
+                for (let i = 0, e = this.props.indexes.length; i < e; i++) {
+                    indexOptions[i] = {
+                        value: this.props.indexes[i],
+                        label: this.props.indexes[i],
+                    };
+                }
+                const select = Select.createTag()
+                    .props({
+                        name: 'changeIndex',
+                        options: indexOptions,
+                        selected: this.props.selected,
+                    })
+                    .refMethods({
+                        onchange: 'setNewIndex',
+                    });
 
-            const text = TextInput.createTag()
-                .props({
-                    name: 'changeNumber',
-                    value: this.props.value,
-                })
-                .refMethods({
-                    onchange: 'setNewValue',
-                    onfocus: 'textIsFocused',
-                    onblur: 'textIsNotFocused',
-                });
+                const text = TextInput.createTag()
+                    .props({
+                        name: 'changeNumber',
+                        value: this.props.value,
+                    })
+                    .refMethods({
+                        onchange: 'setNewValue',
+                        onfocus: 'textIsFocused',
+                        onblur: 'textIsNotFocused',
+                    });
 
-            const button = DescribedButton.createTag()
-                .props({
-                    label: 'Reset Number ' + this.props.selected,
-                })
-                .refMethods({
-                    onclick: 'resetNumber',
-                });
+                const button = DescribedButton.createTag()
+                    .props({
+                        label: 'Reset Number ' + this.props.selected,
+                    })
+                    .refMethods({
+                        onclick: 'resetNumber',
+                    });
 
-            return `
-        <div class="sepcon sepcon-component">
-            ${select.render()}
-            ${text.render()}
-            ${button.render()}
-        </div>`;
-        },
-        'post:render'(changed) {
-            if (changed && changed.selected) {
-                this.element.querySelector('input[name="changeNumber"]').focus();
+                return `
+                    <div class="sepcon sepcon-component">
+                        ${select.render()}
+                        ${text.render()}
+                        ${button.render()}
+                    </div>`;
+            },
+            'post:render'(changed) {
+                if (changed && changed.selected) {
+                    this.element.querySelector('input[name="changeNumber"]').focus();
+                }
             }
         }
     }

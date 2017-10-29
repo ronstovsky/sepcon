@@ -8,10 +8,12 @@ export default SepCon.createComponent({
                 local: {value: 'Not set'}
             }
         },
-        'render'() {
-            return `<div class="sepcon sepcon-element">
-                ${this.props.value}
-            </div>`;
+        view: {
+            render() {
+                return `<div class="sepcon sepcon-element">
+                    ${this.props.value}
+                </div>`;
+            }
         }
     }
 });

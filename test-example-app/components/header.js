@@ -18,12 +18,14 @@ SepCon.createComponent({
                 this.methods.local.debug.call(this);
             }
         },
-        render() {
-            console.log('the decorator "render"', this);
-            this.debugComponent();
-        },
-        debugComponent() {
-            console.log('the decorator "debugComponent', this);
+        view: {
+            render() {
+                console.log('the decorator "render"', this);
+                this.debugComponent();
+            },
+            debugComponent() {
+                console.log('the decorator "debugComponent', this);
+            }
         }
     }
 });
@@ -63,29 +65,31 @@ export default SepCon.createComponent({
                 }
             }
         },
-        events: [
-            { event: 'click', selector: 'div#dfgdfg', handler: 'dfsgdfgs' },
-            { event: 'click', selector: 'div#dfg5e3dfg', handler: 'dfsgdfgs' },
-            { event: 'click', selector: 'div', handler: 'dfsgdfgs' },
-        ],
-        'render'() {
-            console.log('the actual component "render"', this);
-            this.methods.debug();
-            if (!this.props.currentPage) {
-                return '';
+        view: {
+            events: [
+                {event: 'click', selector: 'div#dfgdfg', handler: 'dfsgdfgs'},
+                {event: 'click', selector: 'div#dfg5e3dfg', handler: 'dfsgdfgs'},
+                {event: 'click', selector: 'div', handler: 'dfsgdfgs'},
+            ],
+            'render'() {
+                console.log('the actual component "render"', this);
+                this.methods.debug();
+                if (!this.props.currentPage) {
+                    return '';
+                }
+                const title = TextHolder.createTag()
+                    .props({value: this.props.currentPage.title});
+                const description = TextHolder.createTag()
+                    .props({value: this.props.currentPage.description});
+                return `
+                    <div class="sepcon sepcon-component">
+                        ${title.render()}
+                        ${description.render()}
+                    </div>`;
+            },
+            debugComponent() {
+                console.log('the actual component "debugComponent', this);
             }
-            const title = TextHolder.createTag()
-                .props({value: this.props.currentPage.title});
-            const description = TextHolder.createTag()
-                .props({value: this.props.currentPage.description});
-            return `
-            <div class="sepcon sepcon-component">
-                ${title.render()}
-                ${description.render()}
-            </div>`;
-        },
-        debugComponent() {
-            console.log('the actual component "debugComponent', this);
         }
     }
 });
