@@ -38,11 +38,13 @@ describe('Component Unit', ()=>{
                         return false;
                     }
                 },
-                render() {
-                    const childElement = child.createTag()
-                        .refProps({check: 'passedProp'});
-                    expect(this.props.passedProp).to.be.equal(0);
-                    return childElement.render();
+                view: {
+                    render() {
+                        const childElement = child.createTag()
+                            .refProps({check: 'passedProp'});
+                        expect(this.props.passedProp).to.be.equal(0);
+                        return childElement.render();
+                    }
                 }
             }
         });
@@ -86,11 +88,13 @@ describe('Component Unit', ()=>{
                         return false;
                     }
                 },
-                render() {
-                    const childElement = child.createTag()
-                        .refProps({check: 'mainObj.passedProp'});
-                    expect(this.props.mainObj.passedProp).to.be.equal(0);
-                    return childElement.render();
+                view: {
+                    render() {
+                        const childElement = child.createTag()
+                            .refProps({check: 'mainObj.passedProp'});
+                        expect(this.props.mainObj.passedProp).to.be.equal(0);
+                        return childElement.render();
+                    }
                 }
             }
         });
@@ -126,13 +130,15 @@ describe('Component Unit', ()=>{
                         }
                     }
                 },
-                render() {
-                    const childElement = child.createTag()
-                        .refProps({
-                            checkChild1: 'checkParent1',
-                            checkChild2: 'checkParent2'
-                        });
-                    return childElement.render();
+                view: {
+                    render() {
+                        const childElement = child.createTag()
+                            .refProps({
+                                checkChild1: 'checkParent1',
+                                checkChild2: 'checkParent2'
+                            });
+                        return childElement.render();
+                    }
                 }
             }
         });
@@ -161,15 +167,17 @@ describe('Component Unit', ()=>{
                         return false;
                     }
                 },
-                render() {
-                    const parentElement = parent.createTag()
-                        .refProps({
-                            checkParent1: 'mainObj.passedProp',
-                            checkParent2: 'mainProp'
-                        });
-                    expect(this.props.mainObj.passedProp).to.be.equal(0);
-                    expect(this.props.mainProp).to.be.equal('a');
-                    return parentElement.render();
+                view: {
+                    render() {
+                        const parentElement = parent.createTag()
+                            .refProps({
+                                checkParent1: 'mainObj.passedProp',
+                                checkParent2: 'mainProp'
+                            });
+                        expect(this.props.mainObj.passedProp).to.be.equal(0);
+                        expect(this.props.mainProp).to.be.equal('a');
+                        return parentElement.render();
+                    }
                 }
             }
         });
@@ -193,11 +201,13 @@ describe('Component Unit', ()=>{
         const parent = scope.createComponent({
             id: 'test-'+testNum+'-parent',
             component: {
-                render() {
-                    const childElement = child.createTag()
-                        .refProps({check: 'passedProp'});
-                    expect(this.props.passedProp).to.be.equal(1);
-                    return childElement.render();
+                view: {
+                    render() {
+                        const childElement = child.createTag()
+                            .refProps({check: 'passedProp'});
+                        expect(this.props.passedProp).to.be.equal(1);
+                        return childElement.render();
+                    }
                 }
             }
         });
@@ -210,20 +220,24 @@ describe('Component Unit', ()=>{
         const child = scope.createComponent({
             id: 'test-'+testNum+'-child',
             component: {
-                render() {
-                    this.methods.executeCb();
+                view: {
+                    render() {
+                        this.methods.executeCb();
+                    }
                 }
             }
         });
         const parent = scope.createComponent({
             id: 'test-'+testNum+'-parent',
             component: {
-                render() {
-                    const childElement = child.createTag()
-                        .methods({
-                            executeCb: done
-                        });
-                    return childElement.render();
+                view: {
+                    render() {
+                        const childElement = child.createTag()
+                            .methods({
+                                executeCb: done
+                            });
+                        return childElement.render();
+                    }
                 }
             }
         });
@@ -236,8 +250,10 @@ describe('Component Unit', ()=>{
         const child = scope.createComponent({
             id: 'test-'+testNum+'-child',
             component: {
-                render() {
-                    this.methods.executeCb();
+                view: {
+                    render() {
+                        this.methods.executeCb();
+                    }
                 }
             }
         });
@@ -253,12 +269,14 @@ describe('Component Unit', ()=>{
                         }
                     }
                 },
-                render() {
-                    const childElement = child.createTag()
-                        .refMethods({
-                            executeCb: 'executeMe'
-                        });
-                    return childElement.render();
+                view: {
+                    render() {
+                        const childElement = child.createTag()
+                            .refMethods({
+                                executeCb: 'executeMe'
+                            });
+                        return childElement.render();
+                    }
                 }
             }
         });
@@ -282,8 +300,10 @@ describe('Component Unit', ()=>{
                         }
                     }
                 },
-                render() {
-                    this.methods.executeCb();
+                view: {
+                    render() {
+                        this.methods.executeCb();
+                    }
                 }
             }
         });
@@ -300,12 +320,14 @@ describe('Component Unit', ()=>{
                         }
                     }
                 },
-                render() {
-                    const childElement = child.createTag()
-                        .refMethods({
-                            executeCb: 'executeMe'
-                        });
-                    return childElement.render();
+                view: {
+                    render() {
+                        const childElement = child.createTag()
+                            .refMethods({
+                                executeCb: 'executeMe'
+                            });
+                        return childElement.render();
+                    }
                 }
             }
         });
@@ -329,11 +351,13 @@ describe('Component Unit', ()=>{
                         this.setProps({prop: 2});
                     }
                 },
-                render(changed) {
-                    if(changed && changed.prop) {
-                        console.log('123');
-                        expect(this.props.prop).to.be.equal(2);
-                        done();
+                view: {
+                    render(changed) {
+                        if(changed && changed.prop) {
+                            console.log('123');
+                            expect(this.props.prop).to.be.equal(2);
+                            done();
+                        }
                     }
                 }
             }

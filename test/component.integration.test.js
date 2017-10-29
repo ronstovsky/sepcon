@@ -8,8 +8,10 @@ describe('Component Integration', ()=>{
         comp = SepCon.createComponent({
             id: 'test-tag',
             component: {
-                render: function () {
-                    return '<div>Test</div>';
+                view: {
+                    render: function () {
+                        return '<div>Test</div>';
+                    }
                 }
             }
         });

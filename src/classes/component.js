@@ -11,7 +11,7 @@ export default class Component {
         this.active = false;
 
         this._eventsCallbacks = {};
-        this.scoped = common.clone(componentDefinition);
+        this.scoped = common.clone(componentDefinition.view || {});
         this.scoped.html = element.originalInnerHTML;
         this.scoped.children = element.originalChildren;
         this.scoped.element = element;

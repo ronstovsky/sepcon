@@ -71,8 +71,10 @@ describe('Component Performance', ()=>{
                     this.methods.external.changeCb();
                 }
             },
-            render() {
-                return `${this.props.text} ${this.props.number} ${this.props.num}<br />`;
+            view: {
+                render() {
+                    return `${this.props.text} ${this.props.number} ${this.props.num}<br />`;
+                }
             }
         }
     });
@@ -98,21 +100,23 @@ describe('Component Performance', ()=>{
                     return false;
                 }
             },
-            render() {
-                const max = 1000;
-                let rows = [];
-                for (let i = 0; i < max; i++) {
-                    const current = row.createTag();
-                    current.id(i);
-                    if (i === max - 1) {
-                        current
-                            .refMethods({
-                                firstRenderCb: 'createDone'
-                            });
+            view: {
+                render() {
+                    const max = 1000;
+                    let rows = [];
+                    for (let i = 0; i < max; i++) {
+                        const current = row.createTag();
+                        current.id(i);
+                        if (i === max - 1) {
+                            current
+                                .refMethods({
+                                    firstRenderCb: 'createDone'
+                                });
+                        }
+                        rows.push(current.render());
                     }
-                    rows.push(current.render());
+                    return rows.join('');
                 }
-                return rows.join('');
             }
         }
     });

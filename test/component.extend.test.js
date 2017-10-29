@@ -59,8 +59,10 @@ describe('Component Extension', ()=>{
                     }, true);
                 }
             },
-            render() {
-                return `${this.props.text} ${this.props.number} ${this.props.num}<br />`;
+            view: {
+                render() {
+                    return `${this.props.text} ${this.props.number} ${this.props.num}<br />`;
+                }
             }
         }
     });
@@ -81,14 +83,16 @@ describe('Component Extension', ()=>{
                         }
                     }
                 },
-                render() {
-                    expect(this.props).to.have.property('number');
-                    expect(this.props).to.have.property('text');
-                    expect(this.props).to.have.property('array');
-                    expect(this.props).to.have.property('num');
-                    expect(this.props.num).to.be.equal(5);
-                    this.methods.done();
-                    return `${JSON.stringify(this.props)}`;
+                view: {
+                    render() {
+                        expect(this.props).to.have.property('number');
+                        expect(this.props).to.have.property('text');
+                        expect(this.props).to.have.property('array');
+                        expect(this.props).to.have.property('num');
+                        expect(this.props.num).to.be.equal(5);
+                        this.methods.done();
+                        return `${JSON.stringify(this.props)}`;
+                    }
                 }
             }
         });
@@ -119,12 +123,15 @@ describe('Component Extension', ()=>{
                         parent.proto.state.mount.apply(this, arguments);
                     }
                 },
-                render() {
-                    expect(parent.proto).to.be.an('object');
-                    expect(parent.proto).to.have.property('render');
-                    expect(parent.proto.render).to.not.equal(this.render);
-                    this.methods.done();
-                    return `${this.props.array.length} ${parent.proto.render.apply(this, arguments)}`;
+                view: {
+                    render() {
+                        expect(parent.proto).to.be.an('object');
+                        expect(parent.proto).to.have.property('view');
+                        expect(parent.proto.view).to.have.property('render');
+                        expect(parent.proto.view.render).to.not.equal(this.render);
+                        this.methods.done();
+                        return `${this.props.array.length} ${parent.proto.view.render.apply(this, arguments)}`;
+                    }
                 }
             }
         });
@@ -157,10 +164,12 @@ describe('Component Extension', ()=>{
                         }, true);
                     }
                 },
-                render() {
-                    expect(this.methods.printText()).to.be.equal('Hello');
-                    expect(this.methods.printNumber()).to.be.equal(15);
-                    this.methods.done();
+                view: {
+                    render() {
+                        expect(this.methods.printText()).to.be.equal('Hello');
+                        expect(this.methods.printNumber()).to.be.equal(15);
+                        this.methods.done();
+                    }
                 }
             }
         });
@@ -209,10 +218,12 @@ describe('Component Extension', ()=>{
                         }, true);
                     }
                 },
-                render() {
-                    expect(this.methods.printText()).to.be.equal('Hello');
-                    expect(this.methods.printNumber()).to.be.equal(15);
-                    this.methods.done();
+                view: {
+                    render() {
+                        expect(this.methods.printText()).to.be.equal('Hello');
+                        expect(this.methods.printNumber()).to.be.equal(15);
+                        this.methods.done();
+                    }
                 }
             }
         });

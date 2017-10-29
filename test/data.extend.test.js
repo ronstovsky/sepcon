@@ -62,10 +62,12 @@ describe('Data Extension', ()=>{
                         }
                     }
                 },
-                render() {
-                    expect(this.props.num).to.be.equal(5);
-                    expect(this.props.txt).to.be.equal('hello');
-                    done();
+                view: {
+                    render() {
+                        expect(this.props.num).to.be.equal(5);
+                        expect(this.props.txt).to.be.equal('hello');
+                        done();
+                    }
                 }
             }
         });

@@ -160,11 +160,13 @@ describe('Component Global Segregation (+ Data & Modifier)', ()=>{
                         return false;
                     }
                 },
-                render() {
-                    return childComp.createTag()
-                        .refProps({
-                            objProp1: 'objProp1'+'.prop1'
-                        }).render();
+                view: {
+                    render() {
+                        return childComp.createTag()
+                            .refProps({
+                                objProp1: 'objProp1'+'.prop1'
+                            }).render();
+                    }
                 }
             }
         });
@@ -211,11 +213,13 @@ describe('Component Global Segregation (+ Data & Modifier)', ()=>{
                         return false;
                     }
                 },
-                render() {
-                    return grandChildComp.createTag()
-                        .refProps({
-                            objProp1: 'objProp1'+'.prop1'
-                        }).render();
+                view: {
+                    render() {
+                        return grandChildComp.createTag()
+                            .refProps({
+                                objProp1: 'objProp1'+'.prop1'
+                            }).render();
+                    }
                 }
             }
         });
@@ -235,11 +239,13 @@ describe('Component Global Segregation (+ Data & Modifier)', ()=>{
                         return false;
                     }
                 },
-                render() {
-                    return childComp.createTag()
-                        .refProps({
-                            objProp1: 'objProp1'+'.object'
-                        }).render();
+                view: {
+                    render() {
+                        return childComp.createTag()
+                            .refProps({
+                                objProp1: 'objProp1'+'.object'
+                            }).render();
+                    }
                 }
             }
         });
