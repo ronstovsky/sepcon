@@ -96,7 +96,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    rows: [{ style: 'label', content: 'Object Type' }, { style: 'code', content: type }, { style: 'label', content: 'Definition Id' }, { style: 'code', content: definition.id }, { style: 'label', content: 'Extended Id' }, { style: 'code', content: definition.extend }]
 	                });
 	            } else {
-	                definition.extend = defs[definition.extend].definition;
+	                definition.extend = _utils2.default.clone(defs[definition.extend].definition);
 	            }
 	        }
 	        if (definition.decorators) {
@@ -117,7 +117,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        defs[definition.id] = new cls(definition, this.root);
 	    }
-	    return defs[definition.id];
+	    return {
+	        id: definition.id,
+	        proto: defs[definition.id].definition
+	    };
 	}
 	
 	var SepConClass = function () {
@@ -188,13 +191,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: function createComponent(def) {
 	            var _this2 = this;
 	
-	            create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
-	            return {
-	                id: def.id,
+	            var created = create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
+	            return Object.assign(created, {
 	                createTag: function createTag() {
 	                    return _this2.createTag(def.id);
 	                }
-	            };
+	            });
 	        }
 	    }, {
 	        key: 'createTag',
@@ -823,8 +825,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var definition = def.component;
 	        if (def.extend) {
 	            definition = _utils2.default.extend(def.extend, def.component);
-	            definition.super = def.extend;
-	            definition.state.super = def.extend.state;
 	        }
 	        this.definition = definition;
 	        this.root = root;
@@ -982,18 +982,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                        var startComponentFromElement = function startComponentFromElement() {
 	                            //if(!common.isInDOM(this)) return false;
-	                            //if(common.isDeepNestedInSameComponent(this)) {
-	                            //    root.logs.print({
-	                            //        title: { content: 'WARNING - A Component Is Nested Inside Itself' },
-	                            //        rows: [
-	                            //            { style: 'label', content: 'Components Path' },
-	                            //            { style: 'code', content: common.getComponentElementsPath(this, true, true) },
-	                            //            { style: 'label', content: 'DOM Element' },
-	                            //            { content: this }
-	                            //        ]
-	                            //    });
-	                            //    //return false;
-	                            //}
 	                            var parent = _utils2.default.getParentComponentElement(_this3);
 	                            _this3._componentElement = {
 	                                isInitialized: false,
@@ -1037,9 +1025,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            } else {
 	                                _this3._componentElement.init();
 	                            }
-	                            if (!_this3._componentElement.isInitialized) {
-	                                root.componentElementAdded(_this3);
-	                            }
+	                            root.componentElementAdded(_this3);
 	                        };
 	
 	                        Promise.resolve().then(startComponentFromElement);
@@ -1047,7 +1033,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }, {
 	                    key: 'disconnectedCallback',
 	                    value: function disconnectedCallback() {
-	                        //root.removeComponentInstance(this.component.id);
 	                        if (this.component) {
 	                            this.component.onDestroy();
 	                        }
@@ -1109,7 +1094,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.active = false;
 	
 	        this._eventsCallbacks = {};
-	        this.scoped = _utils2.default.clone(componentDefinition);
+	        this.scoped = _utils2.default.clone(componentDefinition.view || {});
 	        this.scoped.html = element.originalInnerHTML;
 	        this.scoped.children = element.originalChildren;
 	        this.scoped.element = element;
@@ -1119,9 +1104,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 	
 	        delete this.scoped.state;
-	        if (this.scoped.super) {
-	            delete this.scoped.super.state;
-	        }
 	
 	        this.parent = parent;
 	
@@ -1310,7 +1292,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'onRender',
 	        value: function onRender(html) {
-	            var isValid = html && typeof html === 'string';
+	            var isValid = typeof html === 'string';
 	            var isDifferent = html != this.currentHtml;
 	            if (isValid && isDifferent) {
 	                this.scoped.element.innerHTML = this.currentHtml = html;
@@ -1623,9 +1605,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return method;
 	};
 	
-	var changeBindedProps = function changeBindedProps(state, props) {
+	var changeBindedProps = function changeBindedProps(state, source, props, changed) {
 	    var states = [];
 	    var statesData = [];
+	    var changesFullPath = _utils4.default.setChanges(source, props);
 	
 	    var _loop = function _loop(prop) {
 	        if (state.bindings[prop]) {
@@ -1636,12 +1619,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    stateIndex = states.length - 1;
 	                    statesData[stateIndex] = {};
 	                }
-	                statesData[stateIndex][prop] = props[prop];
+	                statesData[stateIndex][prop] = changesFullPath[prop];
 	            });
 	        }
 	    };
 	
-	    for (var prop in props) {
+	    for (var prop in changesFullPath) {
 	        _loop(prop);
 	    }
 	    states.forEach(function (state, index) {
@@ -1670,10 +1653,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.buildGlobalMethods();
 	
 	        this.scoped.setProps = function (props, silent) {
+	            var originalProps = _utils2.default.clone(_this2.scoped.props.local);
 	            var changedProps = _utils4.default.setChanges(_this2.scoped.props.local, props, silent, true);
+	
 	            if (Object.keys(changedProps).length > 0) {
 	                if (silent) {
-	                    _this2.updateLocalProps(changedProps);
+	                    changeBindedProps(_this2, originalProps, _this2.scoped.props.local, changedProps);
 	                    _this2.component.updateState();
 	                    return;
 	                }
@@ -1823,10 +1808,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'updateLocalProps',
 	        value: function updateLocalProps(changed) {
+	            var originalProps = _utils2.default.clone(this.scoped.props.local);
 	            for (var prop in changed) {
 	                this.scoped.props.local[prop] = changed[prop].newValue;
 	            }
-	            changeBindedProps(this, changed);
+	            changeBindedProps(this, originalProps, this.scoped.props.local, changed);
 	        }
 	    }, {
 	        key: 'updateReferencedProps',
@@ -1998,9 +1984,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                bindToRelevantAncestor(node.reference.parent, prop);
 	                            }
 	                        } else {
-	                            var parentStateKey = node.reference.local[prop].key;
+	                            var parentPath = node.reference.local[prop].key.split('.');
+	                            var parentStateKey = parentPath[0];
+	                            parentPath = parentPath.join('.');
 	                            if (node.reference.parent.scoped.props.local[parentStateKey]) {
-	                                node.reference.parent.bind(parentStateKey, _this4);
+	                                node.reference.parent.bind(parentPath, _this4);
 	                            } else {
 	                                bindToRelevantAncestor(node.reference.parent, parentStateKey);
 	                            }
@@ -2023,7 +2011,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    key: item.value,
 	                    state: passedExternalReference.parent.scoped.props.local
 	                };
-	                parentState.bind(stateKey, this);
+	                if (path) {
+	                    parentState.bind(stateKey + '.' + path, this);
+	                } else {
+	                    parentState.bind(stateKey, this);
+	                }
 	            } else {
 	                this.setExternalReferencedProperty(item, externalReferences, parentState.component.parent.component.state, passedExternalReference.parent.reference);
 	            }
@@ -2069,10 +2061,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'bind',
 	        value: function bind(prop, state) {
-	            if (prop.indexOf('.') >= 0) {
-	                path = prop.split('.');
-	                prop = prop[0];
-	            }
 	            if (!this.bindings[prop]) {
 	                this.bindings[prop] = [];
 	            }
@@ -2361,7 +2349,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var definition = def.modifier;
 	        if (def.extend) {
 	            definition = _utils2.default.extend(def.extend, def.modifier);
-	            definition.super = def.extend;
 	        }
 	        this.definition = definition;
 	        this.id = def.id;
@@ -2543,7 +2530,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var definition = def.provider;
 	        if (def.extend) {
 	            definition = _utils2.default.extend(def.extend, def.provider);
-	            definition.super = def.extend;
 	        }
 	        this.definition = definition;
 	        this.id = def.id;
@@ -2551,25 +2537,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.scoped = _utils2.default.clone(definition);
 	
 	        this.services = {};
-	
-	        //for (let methodName in this.scoped.methods) {
-	        //    this.scoped.methods[methodName] = this.scoped.methods[methodName].bind(this.scoped);
-	        //}
-	        //
-	        //this.scoped.setProps = (props, silent) => {
-	        //    const changedProps = changes.setChanges(this.scoped.props, props, silent, true);
-	        //    if (Object.keys(changedProps).length > 0) {
-	        //        if (silent) {
-	        //            this.updateProps(changedProps);
-	        //            this.component.updateState();
-	        //            return;
-	        //        }
-	        //        this.component.onStateChange(changedProps);
-	        //    }
-	        //};
-	        //this.scoped.getProps = () => {
-	        //    return common.clone(this.scoped.props);
-	        //};
 	
 	        this.scoped.router = this.root.router;
 	
@@ -2588,13 +2555,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                });
 	            }
 	        }
-	
-	        //updateProps(changed) {
-	        //    for (let prop in changed) {
-	        //        this.scoped.props[prop] = changed[prop].newValue;
-	        //    }
-	        //}
-	
 	    }]);
 	
 	    return Provider;
@@ -2784,7 +2744,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var definition = def.service;
 	        if (def.extend) {
 	            definition = _utils2.default.extend(def.extend, def.service);
-	            definition.super = def.extend;
 	        }
 	        this.definition = definition;
 	        this.id = def.id;
@@ -2828,13 +2787,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                });
 	            }
 	        }
-	
-	        //updateProps(changed) {
-	        //    for (let prop in changed) {
-	        //        this.scoped.props[prop] = changed[prop].newValue;
-	        //    }
-	        //}
-	
 	    }]);
 	
 	    return Service;
@@ -3241,17 +3193,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: 'componentElementAdded',
 	        value: function componentElementAdded() {
 	            this.newComponentElements = this.newComponentElements.filter(function (componentItem) {
-	                if (componentItem.element._componentElement.isInitialized) {
-	                    return false;
+	                if (!componentItem.element._componentElement.isInitialized) {
+	                    if (componentItem.parent === null) {
+	                        componentItem.element._componentElement.init();
+	                        return false;
+	                    } else if (componentItem.parent._componentElement && componentItem.parent._componentElement.isInitialized) {
+	                        componentItem.element._componentElement.init();
+	                        return false;
+	                    }
+	                    return true;
 	                }
-	                var isOrphan = componentItem.parent === null;
-	                var isParentConstructed = componentItem.parent._componentElement;
-	                var isParentInitiated = isParentConstructed && componentItem.parent._componentElement.isInitialized;
-	                if (isOrphan || isParentInitiated) {
-	                    componentItem.element._componentElement.init();
-	                    return false;
-	                }
-	                return true;
 	            });
 	        }
 	
