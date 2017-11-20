@@ -39,7 +39,7 @@ describe('Modifier Extension', ()=>{
         });
         scope.createModifier({
             id: 'child'+testNum,
-            extend: parent.id,
+            extend: parent,
             modifier: {
                 methods: {
                     updateNumber() {
@@ -73,7 +73,7 @@ describe('Modifier Extension', ()=>{
 
 
     it('should add new methods to inherited ones', function(done) {
-        scope.createModifier({
+        const testParent = scope.createModifier({
             id: 'parent'+testNum,
             modifier: {
                 methods: {
@@ -95,7 +95,7 @@ describe('Modifier Extension', ()=>{
         });
         scope.createModifier({
             id: 'child'+testNum,
-            extend: 'parent'+testNum,
+            extend: testParent,
             modifier: {
                 methods: {
                     setNumber() {

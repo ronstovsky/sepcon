@@ -5,7 +5,7 @@ let expect = chai.expect;
 describe('Data Extension', ()=>{
     let testNum = 0;
     const scope = SepCon.createScope();
-    scope.createData({
+    const parent = scope.createData({
         id: 'parent',
         data: {
             number: 5
@@ -40,7 +40,7 @@ describe('Data Extension', ()=>{
     it('should remain parent props', function(done) {
         scope.createData({
             id: 'child'+testNum,
-            extend: 'parent',
+            extend: parent,
             data: {
                 text: 'hello'
             }

@@ -74,7 +74,7 @@ describe('Component Extension', ()=>{
     it('should remain parent methods and props', function(done) {
         const child = scope.createComponent({
             id: 'child'+testNum,
-            extend: 'parent',
+            extend: parent,
             component: {
                 state: {
                     props: {
@@ -108,7 +108,7 @@ describe('Component Extension', ()=>{
     it('should have super property to point to parent', function(done) {
         const child = scope.createComponent({
             id: 'child'+testNum,
-            extend: 'parent',
+            extend: parent,
             component: {
                 state: {
                     props: {
@@ -147,7 +147,7 @@ describe('Component Extension', ()=>{
     it('should call inherited methods', function(done) {
         const child = scope.createComponent({
             id: 'child'+testNum,
-            extend: 'parent',
+            extend: parent,
             component: {
                 state: {
                     methods: {
@@ -185,7 +185,7 @@ describe('Component Extension', ()=>{
     it('should call inherited methods on a 2nd extended child component', function(done) {
         const child = scope.createComponent({
             id: 'child' + testNum,
-            extend: parent.id,
+            extend: parent,
             component: {
                 state: {
                     methods: {
@@ -201,7 +201,7 @@ describe('Component Extension', ()=>{
         console.log(child);
         const grandchild = scope.createComponent({
             id: 'grandchild' + testNum,
-            extend: child.id,
+            extend: child,
             component: {
                 state: {
                     methods: {

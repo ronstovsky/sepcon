@@ -19,7 +19,7 @@ function create(def, type, defs, cls) {
     }
     else {
         if(definition.extend) {
-            if(!defs[definition.extend]) {
+            if(!definition.extend.proto) {
                 this.root.logs.print({
                     title: { content: `Tried To Extend A Non-Existing Definition`},
                     rows: [
@@ -33,7 +33,7 @@ function create(def, type, defs, cls) {
                 });
             }
             else {
-                definition.extend = common.clone(defs[definition.extend].definition);
+                definition.extend = common.clone(definition.extend.proto);
             }
         }
         if(definition.decorators) {
