@@ -2,14 +2,14 @@ import common from '../shared/utils.common';
 import changes from '../shared/utils.changes';
 
 export default class Data {
-    constructor(def, root) {
-        this.root = root;
-
-        let definition = def.data;
-        if(def.extend) {
-            definition = common.extend(def.extend.data, def.data);
+    constructor(meta, def, root) {
+        let definition = def;
+        if(meta.extend) {
+            definition = common.extend(meta.extend, definition);
         }
-        this.definition = common.clone(def);
+        this.definition = common.clone(definition);
+        this.id = meta.id;
+        this.root = root;
         this.data = definition;
     }
     setProps(props) {
@@ -47,7 +47,7 @@ export default class Data {
                         title: {content: `Could Not Find a Requested Data Property`},
                         rows: [
                             {style: 'label', content: 'Data Id'},
-                            {style: 'code', content: this.definition.id},
+                            {style: 'code', content: this.id},
                             {style: 'label', content: 'Properties Path'},
                             {style: 'code', content: prop},
                             {style: 'label', content: 'Data (snapshot)'},

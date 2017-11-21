@@ -2,13 +2,14 @@ import common from '../shared/utils.common';
 
 
 export default class Modifier {
-    constructor(def, root) {
-        let definition = def.modifier;
-        if(def.extend) {
-            definition = common.extend(def.extend, def.modifier);
+    constructor(meta, def, root) {
+        let definition = def;
+        //if(!definition.methods) definition.methods = {};
+        if(meta.extend) {
+            definition = common.extend(meta.extend, definition);
         }
         this.definition = definition;
-        this.id = def.id;
+        this.id = meta.id;
         this.root = root;
         this.scoped = common.clone(definition);
 

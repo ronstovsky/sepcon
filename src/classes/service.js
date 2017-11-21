@@ -1,13 +1,13 @@
 import common from '../shared/utils.common';
 
 export default class Service {
-    constructor(def, root) {
-        let definition = def.service;
-        if (def.extend) {
-            definition = common.extend(def.extend, def.service);
+    constructor(meta, def, root) {
+        let definition = def;
+        if (meta.extend) {
+            definition = common.extend(meta.extend, definition);
         }
         this.definition = definition;
-        this.id = def.id;
+        this.id = meta.id;
         this.root = root;
         this.scoped = common.clone(definition);
 
@@ -22,8 +22,8 @@ export default class Service {
 
         this.scoped.router = this.root.router;
 
-        if(def.provider) {
-            this.scoped.provider = this.root.providers[def.provider].scoped;
+        if(meta.provider) {
+            this.scoped.provider = this.root.providers[meta.provider].scoped;
         }
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);

@@ -5,12 +5,12 @@ import NumbersModifier from './../modifiers/numbers';
 
 export default SepCon.createComponent({
     id: 'numbers-container',
-    component: {
-        view: {
-            render() {
-                const oneNumberChanger = OneNumberChanger.createTag();
-                const numbersPresentor = NumbersPresentor.createTag();
-                return `<div class="sepcon sepcon-container flex-container">
+}, {
+    view: {
+        render() {
+            const oneNumberChanger = OneNumberChanger.createTag();
+            const numbersPresentor = NumbersPresentor.createTag();
+            return `<div class="sepcon sepcon-container flex-container">
                     <div>
                         ${numbersPresentor.render()}
                     </div>
@@ -18,7 +18,6 @@ export default SepCon.createComponent({
                         ${oneNumberChanger.render()}
                     </div>
                 </div>`;
-            }
         }
     }
 });

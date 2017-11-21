@@ -1,10 +1,10 @@
 import common from '../shared/utils.common';
 
 export default class Provider {
-    constructor(def, root) {
-        let definition = def.provider;
-        if(def.extend) {
-            definition = common.extend(def.extend, def.provider);
+    constructor(meta, def, root) {
+        let definition = def;
+        if(meta.extend) {
+            definition = common.extend(meta.extend, definition);
         }
         this.definition = definition;
         this.id = def.id;

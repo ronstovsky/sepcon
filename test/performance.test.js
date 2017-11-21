@@ -2,8 +2,8 @@ import SepCon from '../src/index';
 
 let expect = chai.expect;
 
-describe('Component Performance', ()=>{
-    const doneCaller = (function(){
+describe('Component Performance', ()=> {
+    const doneCaller = (function () {
         let cb = null;
 
         return {
@@ -19,104 +19,103 @@ describe('Component Performance', ()=>{
     const scope = SepCon.createScope();
     scope.createData({
         id: 'globals',
-        data: {
-            number: 0,
-            propToChange: null
-        }
+    }, {
+        number: 0,
+        propToChange: null
     });
     scope.createModifier({
         id: 'globals',
-        modifier: {
-            methods: {
-                updateNumber() {
-                    this.setProps('globals', {
-                        number: Math.round(Math.random() * 1000)
-                    });
-                }
+    }, {
+        methods: {
+            updateNumber() {
+                this.setProps('globals', {
+                    number: Math.round(Math.random() * 1000)
+                });
             }
         }
     });
     const row = scope.createComponent({
         id: 'row',
-        component: {
-            state: {
-                props: {
-                    local: {
-                        number: 0,
-                        text: ''
-                    },
-                    global: {
-                        num: {
-                            data: 'globals',
-                            key: 'number'
-                        }
+    }, {
+        state: {
+            props: {
+                local: {
+                    number: 0,
+                    text: ''
+                },
+                global: {
+                    num: {
+                        data: 'globals',
+                        key: 'number'
                     }
-                },
-                methods: {
-                    external: {
-                        firstRenderCb() {},
-                        changeCb() {}
-                    }
-                },
-                mount() {
-                    this.setProps({
-                        number: Math.round(Math.random() * 1000),
-                        text: parseInt(Date.now() * 1000 + Math.round(Math.random() * 1000)).toString(36)
-                    }, true);
-                },
-                'post:mount'() {
-                    this.methods.external.firstRenderCb();
-                },
-                change() {
-                    this.methods.external.changeCb();
                 }
             },
-            view: {
-                render() {
-                    return `${this.props.text} ${this.props.number} ${this.props.num}<br />`;
+            methods: {
+                external: {
+                    firstRenderCb() {
+                    },
+                    changeCb() {
+                    }
                 }
+            },
+            mount() {
+                this.setProps({
+                    number: Math.round(Math.random() * 1000),
+                    text: parseInt(Date.now() * 1000 + Math.round(Math.random() * 1000)).toString(36)
+                }, true);
+            },
+            'post:mount'() {
+                this.methods.external.firstRenderCb();
+            },
+            change() {
+                this.methods.external.changeCb();
+            }
+        },
+        view: {
+            render() {
+                return `${this.props.text} ${this.props.number} ${this.props.num}<br />`;
             }
         }
     });
 
     const rows = scope.createComponent({
         id: 'rows',
-        component: {
-            state: {
-                props: {
-                    global: {
-                        propToChange: {
-                            data: 'globals',
-                            key: 'propToChange'
-                        }
+    }, {
+        state: {
+            props: {
+                global: {
+                    propToChange: {
+                        data: 'globals',
+                        key: 'propToChange'
                     }
-                },
-                methods: {
-                    external: {
-                        createDone() {}
-                    }
-                },
-                change() {
-                    return false;
                 }
             },
-            view: {
-                render() {
-                    const max = 1000;
-                    let rows = [];
-                    for (let i = 0; i < max; i++) {
-                        const current = row.createTag();
-                        current.id(i);
-                        if (i === max - 1) {
-                            current
-                                .refMethods({
-                                    firstRenderCb: 'createDone'
-                                });
-                        }
-                        rows.push(current.render());
+            methods: {
+                external: {
+                    createDone() {
                     }
-                    return rows.join('');
                 }
+            },
+            change() {
+                return false;
+            }
+        },
+        view: {
+            render() {
+                const max = 1000;
+                let rows = [];
+                for (let i = 0; i < max; i++) {
+                    const current = row.createTag();
+                    current.id(i);
+                    if (i === max - 1) {
+                        current
+                            .refMethods({
+                                firstRenderCb: 'createDone'
+                            });
+                    }
+                    rows.push(current.render());
+                }
+                return rows.join('');
             }
         }
     });
@@ -124,10 +123,10 @@ describe('Component Performance', ()=>{
     it('render 1000 rows', (done) => {
         const max = 1000;
         let rows = [];
-        for(let i=0; i<max; i++) {
+        for (let i = 0; i < max; i++) {
             const current = row.createTag();
             current.id(i);
-            if(i === max-1) {
+            if (i === max - 1) {
                 current
                     .methods({
                         changeCb: doneCaller.callDone,
@@ -144,7 +143,7 @@ describe('Component Performance', ()=>{
     it('render 1000 rows in container', (done) => {
         let rowsHtml = rows.createTag()
             .methods({
-                createDone: function() {
+                createDone: function () {
                     done();
                 }
             })

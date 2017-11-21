@@ -6,15 +6,16 @@ describe('Component Integration', ()=>{
     let comp;
     it('should add new component under unique tag', ()=>{
         comp = SepCon.createComponent({
-            id: 'test-tag',
-            component: {
-                view: {
-                    render: function () {
-                        return '<div>Test</div>';
-                    }
+            id: 'test-tag'
+        },
+        {
+            view: {
+                render: function () {
+                    return '<div>Test</div>';
                 }
             }
-        });
+        }
+        );
         assert.ok(comp);
     });
 

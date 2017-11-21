@@ -2,43 +2,43 @@ import Root from './root';
 import { DATA_CHANGES_AFFECTING } from './shared/constants';
 import common from './shared/utils.common';
 
-function create(def, type, defs, cls) {
+function create(meta, def, type, defs, cls) {
     let definition = common.clone(def);
 
-    if(defs[definition.id]) {
+    console.log(defs);
+    if(defs[meta.id]) {
         this.root.logs.print({
             title: { content: `Tried To Create A Definition With Existing Id`},
             rows: [
                 { style: 'label', content: 'Object Type' },
                 { style: 'code', content: type },
                 { style: 'label', content: 'Definition Id' },
-                { style: 'code', content: definition.id },
+                { style: 'code', content: meta.id },
             ]
         });
         return false;
     }
     else {
-        if(definition.extend) {
-            if(!definition.extend.proto) {
+        if(meta.extend) {
+            if(!meta.extend.proto) {
                 this.root.logs.print({
                     title: { content: `Tried To Extend A Non-Existing Definition`},
                     rows: [
                         { style: 'label', content: 'Object Type' },
                         { style: 'code', content: type},
                         { style: 'label', content: 'Definition Id' },
-                        { style: 'code', content: definition.id },
+                        { style: 'code', content: meta.id },
                         { style: 'label', content: 'Extended Id' },
-                        { style: 'code', content: definition.extend },
+                        { style: 'code', content: meta.extend },
                     ]
                 });
             }
             else {
-                definition.extend = common.clone(definition.extend.proto);
+                meta.extend = common.clone(meta.extend.proto);
             }
         }
-        if(definition.decorators) {
-
-            definition.decorators = definition.decorators.filter(dec => {
+        if(meta.decorators) {
+            meta.decorators = meta.decorators.filter(dec => {
                 if(!defs[dec]) {
                     this.root.logs.print({
                         title: { content: `Tried To Decorate A Definition With a Non-Existing One`},
@@ -46,7 +46,7 @@ function create(def, type, defs, cls) {
                             { style: 'label', content: 'Object Type' },
                             { style: 'code', content: type },
                             { style: 'label', content: 'Definition Id' },
-                            { style: 'code', content: definition.id },
+                            { style: 'code', content: meta.id },
                             { style: 'label', content: 'Decorator Id' },
                             { style: 'code', content: dec },
                         ]
@@ -55,13 +55,13 @@ function create(def, type, defs, cls) {
                 }
                 return true;
             });
-            definition.decorators = definition.decorators.map(dec => common.clone(defs[dec].definition));
+            meta.decorators = meta.decorators.map(dec => common.clone(defs[dec].definition));
         }
-        defs[definition.id] = new cls(definition, this.root);
+        defs[meta.id] = new cls(meta, definition, this.root);
     }
     return {
-        id: definition.id,
-        proto: defs[definition.id].definition
+        id: meta.id,
+        proto: defs[meta.id].definition
     };
 }
 
@@ -93,34 +93,35 @@ class SepConClass {
         }
         return null;
     }
-    createData(def) {
-        return create.call(this, def, 'data', this.root.datas, this.root.classes.Data);
+    createData(meta, def) {
+        return create.call(this, meta, def, 'data', this.root.datas, this.root.classes.Data);
     }
-    createModifier(def) {
-        return create.call(this, def, 'modifier', this.root.modifiers, this.root.classes.Modifier);
+    createModifier(meta, def) {
+        return create.call(this, meta, def, 'modifier', this.root.modifiers, this.root.classes.Modifier);
     }
-    createProvider(def) {
-        return create.call(this, def, 'provider', this.root.providers, this.root.classes.Provider);
+    createProvider(meta, def) {
+        return create.call(this, meta, def, 'provider', this.root.providers, this.root.classes.Provider);
     }
-    createService(def) {
-        if(def.provider && !this.root.providers[def.provider]) {
+    createService(meta, def) {
+        if(meta.provider && !this.root.providers[meta.provider]) {
             this.root.logs.print({
                 title: { content: `Reference to Non-Existing Service Provider`},
                 rows: [
                     { style: 'label', content: 'Service Id' },
-                    { style: 'code', content: def.id },
+                    { style: 'code', content: meta.id },
                     { style: 'label', content: 'Provider Id' },
-                    { style: 'code', content: def.provider },
+                    { style: 'code', content: meta.provider },
                 ]
             });
             return false;
         }
-        return create.call(this, def, 'service', def.provider ? this.root.providers[def.provider].services : this.root.services, this.root.classes.Service);
+        return create.call(this, meta, def, 'service', meta.provider ? this.root.providers[meta.provider].services : this.root.services, this.root.classes.Service);
     }
-    createComponent(def) {
-        let created = create.call(this, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
+    createComponent(meta, def) {
+        console.log(meta, def);
+        let created = create.call(this, meta, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
         return Object.assign(created, {
-            createTag: () => this.createTag(def.id)
+            createTag: () => this.createTag(meta.id)
         });
     }
     createTag(id) {

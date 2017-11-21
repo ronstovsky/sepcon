@@ -3,16 +3,15 @@ import PropsPasser from './../components/props-passer';
 
 export default SepCon.createComponent({
     id: 'passing-props-container',
-    component: {
-        view: {
-            render() {
-                const propsPasser = PropsPasser.createTag();
-                return `<div class="sepcon sepcon-container">
+}, {
+    view: {
+        render() {
+            const propsPasser = PropsPasser.createTag();
+            return `<div class="sepcon sepcon-container">
                     <div class="presentors">
                         ${propsPasser.render()}
                     </div>
                 </div>`;
-            }
         }
     }
 });

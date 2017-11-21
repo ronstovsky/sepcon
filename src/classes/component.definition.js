@@ -5,17 +5,22 @@ import { TAG_PREFIX, ADD_COMPONENT_DEFINITION } from './../shared/constants';
 
 //defining the component and registering its element
 export default class ComponentDefinition {
-    constructor(def, root) {
-        let definition = def.component;
-        if(def.extend) {
-            definition = common.extend(def.extend, def.component);
+    constructor(meta, def, root) {
+        console.log(def);
+        let definition = {
+            state: def.state || {},
+            view: def.view || {}
+        };
+        if(meta.extend) {
+            definition = common.extend(meta.extend, definition);
         }
         this.definition = definition;
+        this.id = meta.id;
         this.root = root;
-        this.tag = TAG_PREFIX + (this.root.hash ? this.root.hash+'-' : '') + def.id;
+        this.tag = TAG_PREFIX + (this.root.hash ? this.root.hash+'-' : '') + meta.id;
 
-        if(def.decorators && def.decorators.length && def.decorators.length > 0) {
-            def.decorators.forEach(this.addDecorator.bind(this));
+        if(meta.decorators && meta.decorators.length && meta.decorators.length > 0) {
+            meta.decorators.forEach(this.addDecorator.bind(this));
         }
 
         this.root.addComponentDefinition(this);
