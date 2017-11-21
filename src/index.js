@@ -4,8 +4,6 @@ import common from './shared/utils.common';
 
 function create(meta, def, type, defs, cls) {
     let definition = common.clone(def);
-
-    console.log(defs);
     if(defs[meta.id]) {
         this.root.logs.print({
             title: { content: `Tried To Create A Definition With Existing Id`},
@@ -93,16 +91,16 @@ class SepConClass {
         }
         return null;
     }
-    createData(meta, def) {
+    createData(meta, def = {}) {
         return create.call(this, meta, def, 'data', this.root.datas, this.root.classes.Data);
     }
-    createModifier(meta, def) {
+    createModifier(meta, def = {}) {
         return create.call(this, meta, def, 'modifier', this.root.modifiers, this.root.classes.Modifier);
     }
-    createProvider(meta, def) {
+    createProvider(meta, def = {}) {
         return create.call(this, meta, def, 'provider', this.root.providers, this.root.classes.Provider);
     }
-    createService(meta, def) {
+    createService(meta, def = {}) {
         if(meta.provider && !this.root.providers[meta.provider]) {
             this.root.logs.print({
                 title: { content: `Reference to Non-Existing Service Provider`},
@@ -117,8 +115,7 @@ class SepConClass {
         }
         return create.call(this, meta, def, 'service', meta.provider ? this.root.providers[meta.provider].services : this.root.services, this.root.classes.Service);
     }
-    createComponent(meta, def) {
-        console.log(meta, def);
+    createComponent(meta, def = {}) {
         let created = create.call(this, meta, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
         return Object.assign(created, {
             createTag: () => this.createTag(meta.id)

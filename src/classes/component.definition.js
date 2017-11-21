@@ -6,7 +6,6 @@ import { TAG_PREFIX, ADD_COMPONENT_DEFINITION } from './../shared/constants';
 //defining the component and registering its element
 export default class ComponentDefinition {
     constructor(meta, def, root) {
-        console.log(def);
         let definition = {
             state: def.state || {},
             view: def.view || {}
