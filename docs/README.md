@@ -30,13 +30,12 @@ No need to create instances of that [data] object.
 ```javascript
 import SepCon from 'sepcon';
 SepCon.createData({
-    id: 'user',
-    data: {
-        name: 'Mr. Man',
-        age: 99,
-        gender: 'female',
-        //...
-    }
+  id: 'user'
+}, {
+  name: 'Mr. Man',
+  age: 99,
+  gender: 'female',
+  //...
 });
 ```
 <a name="modifier"></a>
@@ -51,18 +50,17 @@ It has a `mount` lifecycle support.
 ```javascript
 import SepCon from 'sepcon';
 SepCon.createModifier({
-    id: 'user',
-    modifier: {
-        methods: {
-            setName(name) {
-                this.setProps('user', { name });
-            }
-        },
-        routes: [],
-        'pre:mount'() {}
-        mount() {}
-        'post:mount'() {}
+  id: 'user'
+}, {
+  methods: {
+    setName(name) {
+      this.setProps('user', { name });
     }
+  },
+  routes: [],
+  'pre:mount'() {}
+  mount() {}
+  'post:mount'() {}
 });
 ```
 
@@ -75,15 +73,14 @@ Once a representing element is appended to the DOM - it initializes a new *Compo
 ```javascript
 import SepCon from 'sepcon';
 SepCon.createComponent({
-    id: 'myComponent',
-    component: {
-        state: {
-            //the Component State is defined here
-        },
-        view: {
-	        //the Component View is defined here
-        }
-    }
+  id: 'myComponent'
+}, {
+  state: {
+    //the Component State is defined here
+  },
+  view: {
+    //the Component View is defined here
+  }
 });
 ```
 * *Under the hood, your new component will be registered under a tagName of this structure: `x-sepcon-mycomponent`*
@@ -98,19 +95,18 @@ The [component state] is declared as per as the [component] itself. It won't be 
 ```javascript
 import SepCon from 'sepcon';
 SepCon.createComponent({
-    id: 'myComponent',
-    component: {
-        state: {
-            props: {
-            	//the Properties Segregation is defined here
-            },
-            methods: {
-            	//the Methods Segregation is defined here
-            },
-            mount() {},
-            change(changed) {}
-        }
-    }
+  id: 'myComponent'
+}, {
+  state: {
+    props: {
+      //the Properties Segregation is defined here
+    },
+    methods: {
+      //the Methods Segregation is defined here
+    },
+    mount() {},
+    change(changed) {}
+  }
 });
 ```
 * *The [component state] has two default [lifecycles][lifecycle] - `mount` and `change`.  *
@@ -121,14 +117,14 @@ SepCon.createComponent({
 The `change` [lifecycle][lifecycle] method will get 1 argument, the ***changed*** object - a map of the changed properties in a [component state].
 ```javascript
 {
-    changedProp1: {
-    	newValue: 1,
-        oldValue: 0
-    },
-    changedProp2: {
-    	newValue: 'hello',
-        oldValue: null
-    }
+  changedProp1: {
+    newValue: 1,
+    oldValue: 0
+  },
+  changedProp2: {
+    newValue: 'hello',
+    oldValue: null
+  }
 }
 ```
 * *If a new property is added, the old value will be represented by `null`.*
@@ -144,11 +140,11 @@ The local properties and methods of a [component state] are declared and handled
   The local properties can be changed with `setProps` method.
   ```javascript
   state: {
-      props: {
-          local: {
-              counter: 0
-          }
+    props: {
+      local: {
+        counter: 0
       }
+    }
   }
   ```
   * *We've created a new local property named `counter`.*
@@ -157,18 +153,18 @@ The local properties and methods of a [component state] are declared and handled
   Local methods will run in the [component state]'s scope.
   ```javascript
   state: {
-      methods: {
-          local: {
-              increaseCounter(next) {
-                  this.setProps({
-                      counter: this.props.local.counter++
-                  });
-                  next();
-              }
-          }
+    methods: {
+      local: {
+        increaseCounter(next) {
+          this.setProps({
+            counter: this.props.local.counter++
+          });
+          next();
+        }
       }
-   }
-   ```
+    }
+  }
+  ```
   * *`increaseCounter` will increase the local property named `counter` by 1, every time it will get executed. We'll use the `setProps` method of the [component state] in order to alter state's local properties.*
   * *Notice the `next` method - it's always get passed as the first argument at each local method. In our component we have the abillity to control the methods' flow, we will elaborate on this later on.*
 
@@ -189,32 +185,32 @@ The declarations under the global segregation are references to [data] (properti
 
   ```javascript
   state: {
-      props: {
-          global: {
-              userName: {
-                  data: 'user',
-                  key: 'name'
-              }
-          }
+    props: {
+      global: {
+        userName: {
+          data: 'user',
+          key: 'name'
+        }
       }
+    }
   }
   ```
   * *The property `userName` is derived from a [data] object with the ID: `user`, under the property `name`.*
   We could also subscribe to [data] properties on run time by using the ```setGlobalProps``` method:
   ```javascript
   state: {
-	  methods: {
-		  local: {
-			  changeGlobalProps(newKey) {
-				  this.setGlobalProps({
-					  myGlobalProp: {
-						  data: 'some-data-object',
-						  key: newKey
-					  }
-				  });
-			  }
-		  }
-	  }
+    methods: {
+      local: {
+        changeGlobalProps(newKey) {
+          this.setGlobalProps({
+            myGlobalProp: {
+              data: 'some-data-object',
+              key: newKey
+            }
+          });
+        }
+      }
+    }
   }
   ```
      * *We simply pass new objects, with the same structure as in the regular ```global``` definitions*
@@ -222,7 +218,7 @@ The declarations under the global segregation are references to [data] (properti
      * *If we would like to **remove** a given global property - we could simply pass that same property name with the value of ```null```:
        ```javascript
        this.setGlobalProps({
-	       myGlobalProp: null
+         myGlobalProp: null
        });
        ```
 
@@ -230,18 +226,18 @@ The declarations under the global segregation are references to [data] (properti
   Global methods are references to [modifier] methods.
   ```javascript
   state: {
-      methods: {
-          global: {
-              changeUserName: {
-                  modifier: 'user',
-                  key: 'setName',
-                  pass(newName) {
-                      newName = 'Mr. ' + newName;
-                      return [newName];
-                  }
-              }
+    methods: {
+      global: {
+        changeUserName: {
+          modifier: 'user',
+          key: 'setName',
+          pass(newName) {
+            newName = 'Mr. ' + newName;
+            return [newName];
           }
+        }
       }
+    }
   }
   ```
   * *The method `changeUserName` points to a method named `setName` located at a [modifier] named `user`.*
@@ -257,13 +253,12 @@ The [component view] is declared as per as the [component] itself. It won't be d
 ```javascript
 import SepCon from 'sepcon';
 SepCon.createComponent({
-    id: 'myComponent',
-    component: {
-        view: {
-	        events: [],
-            render() {}
-        }
-    }
+  id: 'myComponent'
+}, {
+  view: {
+    events: [],
+    render() {}
+  }
 });
 ```
 * *The [Component View] has a default [Lifecycles][lifecycle] - `render`.*
@@ -273,9 +268,9 @@ In order to render a [component], we will use the ```render``` [lifecycle].
 This method *must* return a string in the end, that will be inserted into the [component]'s representing DOM element (which will be rendered itself by the [component tag].
 ```javascript
 view: {
-	render() {
-		return '<div>Some HTML</div>';
-	}
+  render() {
+    return '<div>Some HTML</div>';
+  }
 }
 ```
 * *This [lifecycle] will be invoked as a result of either ```mount```, ```resume``` or ```change``` [lifecycles][lifecycle].*
@@ -285,16 +280,16 @@ view: {
 To create interactions with the UI we will need use the ```events``` property. This is simply an array of objects that will represent the different events of a given [component].
 ```javascript
 view: {
-	events: [
-		{
-			event: 'click',
-			selector: 'button',
-			callback: 'handleClick'
-		}
-	],
-	handleClick(e) {
-		//do stuff
-	}
+  events: [
+    {
+      event: 'click',
+      selector: 'button',
+      callback: 'handleClick'
+    }
+  ],
+  handleClick(e) {
+    //do stuff
+  }
 }
 ```
 * *```event``` - the event type - ```click```, ```keyup```, etc.*
@@ -333,7 +328,7 @@ We can get this by two ways.
 2. Using the returned value of the `createComponent` method:
    ```javascript
    import SepCon from 'sepcon';
-   const myComponent = SepCon.createComponent({id: 'myComponent', component: {});
+   const myComponent = SepCon.createComponent({id: 'myComponent'}, {});
    const myComponentTag = myComponent.createTag();
    ```
 
@@ -344,24 +339,24 @@ The [component tag] object has a few methods in order to pass relevant data into
   The only thing to remember is that these values will be completely dettached of any original logic (wether it's a local/global property/method of the parent [component state]).
   ```javascript
   myComponentTag
-  	.props({
-  		prop1: 'abc'
-  	})
-  	.methods({
-  		method1: function() {}
-  	});
+    .props({
+      prop1: 'abc'
+    })
+    .methods({
+      method1: function() {}
+    });
   ```
 * **Referenced Values - `refProps`, `refMethods`**
   These are directly derived of the parent [component state].
   In other words - we will supply a key, and the child's [component state] will be bind to the original property of the parent (if passed through `refProps`), or be able to execute the passed method throughout all of its segregations  - **Local** > **External** > **Global** (if passed through `refMethods`).
   ```javascript
   myComponentTag
-  	.refProps({
-  		prop2: 'propFromState'
-  	})
-  	.refMethods({
-  		method2: 'methodFromState'
-  	});
+    .refProps({
+      prop2: 'propFromState'
+    })
+    .refMethods({
+      method2: 'methodFromState'
+    });
   ```
 * **HTML**
   Passing a pure HTML string.
@@ -371,12 +366,12 @@ The [component tag] object has a few methods in order to pass relevant data into
   This html will be available only to the [component] itself via the `html` property, to get the string itself, nor via the `children` property which holds an array of DOM elements.
   ```javascript
   render() {
-  	return `<div>
-    	${this.html}
-    	<hr />
-    	${this.children.length
-    		? this.children.map(el => el.outerHTML).join('')
-    		: ''}
+    return `<div>
+      ${this.html}
+      <hr />
+      ${this.children.length
+        ? this.children.map(el => el.outerHTML).join('')
+        : ''}
     </div>`;
   }
   ```
@@ -386,9 +381,9 @@ The [component tag] object has a few methods in order to pass relevant data into
   ```javascript
   let componentTags = [];
   for(let key in this.props.someArray) {
-  	const myComponentTag = myComponent.createTag();
-  	myComponentTag.id(key);
-  	componentTags.push(myComponentTag);
+    const myComponentTag = myComponent.createTag();
+    myComponentTag.id(key);
+    componentTags.push(myComponentTag);
   }
   ```
 
@@ -403,10 +398,10 @@ We have 1 method for that - `render`, but it can be used in 2 different ways:
    *Will return:*
    ```html
    <x-sepcon-mycomponent
-   		data-properties="..."
-   		data-methods="..."
-   		data-identifier="...">
-   			Passed HTML
+     data-properties="..."
+     data-methods="..."
+     data-identifier="...">
+       Passed HTML
    </x-sepcon-mycomponent>
    ```
 2. Partial rendered DOM element - `open` / `close`.
@@ -419,9 +414,9 @@ We have 1 method for that - `render`, but it can be used in 2 different ways:
    *Will return:*
    ```html
    <x-sepcon-mycomponent
-   		data-properties="..."
-   		data-methods="..."
-   		data-identifier="...">
+     data-properties="..."
+     data-methods="..."
+     data-identifier="...">
    ```
 
    Creating the closing tag:
@@ -445,20 +440,19 @@ Each method in the service definition will get ```resolve``` and ```reject``` me
 ```javascript
 import SepCon from 'sepcon';
 SepCon.createService({
-    id: 'user',
-    service: {
-        methods: {
-		    getUser(resolve, reject, params) {
-			    someAjaxCall('someUrl')
-				    .then(response => {
-					    resolve(response);
-				    })
-				    .catch((error) => {
-					    reject(error);
-				    });
-		    }
-        }
+  id: 'user'
+}, {
+  methods: {
+    getUser(resolve, reject, params) {
+      someAjaxCall('someUrl')
+        .then(response => {
+          resolve(response);
+        })
+        .catch((error) => {
+          reject(error);
+        });
     }
+  }
 });
 ```
 
@@ -468,11 +462,11 @@ All service methods are, by definition, asynchronous and work as a promises. The
 ```javascript
 import SepCon from 'sepcon';
 SepCon.service('user').getUser(params)
-	.then((user) => {
-		console.log('user have been gotten', user);
-	}, (error) => {
-		console.error('error with getting the user');
-	});
+  .then((user) => {
+    console.log('user have been gotten', user);
+  }, (error) => {
+    console.error('error with getting the user');
+  });
 ```
 
 <a name="provider"></a>
@@ -492,60 +486,58 @@ Services will have a reference to their provider under ```this.provider```.
 import SepCon from 'sepcon';
 
 SepCon.createProvider({
-    id: 'some-server',
-    provider: {
-	    /***
-	    * if any authentication to the server needed
-	    * this could be a good place to initiate the process
-	    * you could also consider using 'pre:mount' to make sure it will take place on the current event loop
-	    ***/
-        mount() {},
+  id: 'some-server'
+}, {
+  /***
+  * if any authentication to the server needed
+  * this could be a good place to initiate the process
+  * you could also consider using 'pre:mount' to make sure it will take place on the current event loop
+  ***/
+  mount() {},
 
-		/***
-		* we might consider writing some generic methods for different actions against this particular provider (i.e. server)
-		* this one is just an example!
-		***/
-		getData(params) {
-			params.url = 'my-cool-url';
-			return new Promise(resolve, reject) {
-				$.ajax(params)
-					.done(res => {
-						if(res.error) { reject(res.error); }
-						else { resolve(res; }
-					})
-					.catch(err => {
-						reject(err);
-					});
-			}
-		}
+  /***
+  * we might consider writing some generic methods for different actions against this particular provider (i.e. server)
+  * this one is just an example!
+  ***/
+  getData(params) {
+    params.url = 'my-cool-url';
+    return new Promise(resolve, reject) {
+      $.ajax(params)
+        .done(res => {
+          if(res.error) { reject(res.error); }
+          else { resolve(res; }
+        })
+        .catch(err => {
+          reject(err);
+        });
     }
+  }
 });
 
 SepCon.createService({
-    id: 'data-fetcher',
-    provider: 'some-server',
-    service: {
-        methods: {
-		    getSomeInfo(resolve, reject, params) {
-			    this.provider.getData(params)
-				    .then(response => {
-					    resolve(response);
-				    })
-				    .catch((error) => {
-					    reject(error);
-				    });
-		    }
-        }
+  id: 'data-fetcher',
+  provider: 'some-server'
+}, {
+  methods: {
+    getSomeInfo(resolve, reject, params) {
+      this.provider.getData(params)
+        .then(response => {
+          resolve(response);
+        })
+        .catch((error) => {
+          reject(error);
+        });
     }
+  }
 });
 
 SepCon.service('data-fetcher')
-	.getSomeInfo({param1: 'abc'})
-	.then((res) => {
-		//do stuff with the returned data
-	}, (err) => {
-		//error handling
-	});
+  .getSomeInfo({param1: 'abc'})
+    .then((res) => {
+      //do stuff with the returned data
+    }, (err) => {
+      //error handling
+    });
 ```
 * *This will send to the server via $.ajax an object called `params` that will have both `param1: 'abc'` and `url: 'my-cool-url`.*
 * *The response will first be handled at the [provider]'s `getData` method*, then it will go through the [service]'s `getSomeInfo` method, and then it will be returned to the Promise's `then` method from the initial executer (in this case it was directly from the window, but most probably will be handled via a [modifier].
@@ -556,10 +548,10 @@ The goal behind the [lifecycles][lifecycle] can be splitted into three:
 1. Sync of two or more scopes and/or methods and thus creating a sequence.
 ```javascript
 state: {
-   	mount() {} //executed 1st
+  mount() {} //executed 1st
 },
 view: {
-	render() {} //executed 2nd
+  render() {} //executed 2nd
 }
 ```
 2. Supply the ability to have hooks for before a given execution (`pre`) and after (`post`) it, systematically:
@@ -571,12 +563,12 @@ mount() {}
 3. Supply the ability to "break the chain" - if at some point we wouldn't want the [lifecycle] to continue, we could stop the sequence by returning a `false` value:
 ```javascript
 state: {
-	'pre:mount'() {} //executed 1st
-	mount() { return false; } //executed 3rd
+  'pre:mount'() {} //executed 1st
+  mount() { return false; } //executed 3rd
 },
 view: {
-	'pre:render'() {} //executed 2nd
-	render() {} //won't be executed
+  'pre:render'() {} //executed 2nd
+  render() {} //won't be executed
 }
 ```
 
@@ -610,9 +602,9 @@ We can add more lifecycles, as well as override existing ones, by accessing the 
 ```javascript
 import SepCon from 'sepcon';
 SepCon.setConfiguration({
-    sequencer: {
-    	myNewMount: {}
-    }
+  sequencer: {
+    myNewMount: {}
+  }
 });
 ```
 
@@ -621,37 +613,37 @@ In order to gain full control we have a function to deal with the arguments that
 
 ```javascript
 myNewMount: {
-    /**
-    * the send function returns an array
-    * that will be passed to the lifecycle's methods as arguments
-    * this.base is the reference to the SepCon's relevant instance
-    * @param step - current step { target, action }
-    * @param hook - 'pre'/false/'post'
-    * @returns []
-    */
-    send: function(step, hook) {
-        return [...];
+  /**
+  * the send function returns an array
+  * that will be passed to the lifecycle's methods as arguments
+  * this.base is the reference to the SepCon's relevant instance
+  * @param step - current step { target, action }
+  * @param hook - 'pre'/false/'post'
+  * @returns []
+  */
+  send: function(step, hook) {
+    return [...];
+  },
+
+  /**
+  * gets the returned value of a lifecycle's method
+  * @param step - current step { target, action }
+  * @param hook - 'pre'/false/'post'
+  * @param res - the returned value of the current lifecycle step
+  */
+  retrieve: function(step, hook, res) {},
+
+  //the sequence array holds the steps to iterate over
+  sequence: [
+    {
+      target: 'state',
+      action: 'mount'
     },
-
-    /**
-    * gets the returned value of a lifecycle's method
-    * @param step - current step { target, action }
-    * @param hook - 'pre'/false/'post'
-    * @param res - the returned value of the current lifecycle step
-    */
-    retrieve: function(step, hook, res) {},
-
-    //the sequence array holds the steps to iterate over
-    sequence: [
-        {
-            target: 'state',
-            action: 'mount'
-        },
-        {
-            target: 'component',
-            action: 'render'
-        },
-    ]
+    {
+      target: 'component',
+      action: 'render'
+    },
+  ]
 }
 ```
 
@@ -661,9 +653,9 @@ SepCon uses a pretty simple, straight-forward [router], that is available for us
 They are the only privileged classes to use the SepCon's [router]. In their instances' scopes - you'll have a אני י עדי`router` property under the `this` context:
 ```javascript
 state:{
-	change() {
-		console.log(this.router);
-	}
+  change() {
+    console.log(this.router);
+  }
 }
 ```
 
@@ -671,12 +663,12 @@ state:{
 In oppose to the common use-case of frameworks' routers, with SepCon it's a bit different - both [component states][component state] and [modifiers][modifier] have to set a `router` property in their declaration that will hold an array of different routes' RegExps.
 ```javascript
 routes: [
-	{
-		match: /^\s*$/,
-		handler: function() {
-			console.log('This is the root page');
-		}
-	}
+  {
+    match: /^\s*$/,
+    handler: function() {
+      console.log('This is the root page');
+    }
+  }
 ]
 ```
 *This pattern could be applied to both [component states][component state] and [modifiers][modifier], in exactly the same way.
@@ -684,22 +676,22 @@ Once a route will match the RegExp supplied at the `match` property, the `handle
 
 *In a [component state] it will look something similar to this:*
 ```javascript
-component: {
-	state: {
-		//props: {},
-		//methods: {},
-		//mount() {},
-		//change(changed) {},
-		routes: []
-	}
+{
+  state: {
+    //props: {},
+    //methods: {},
+    //mount() {},
+    //change(changed) {},
+    routes: []
+  }
 }
 ```
 *In a [modifier] it will look something similar to this:*
 ```javascript
-modifier: {
-	//methods: {},
-	//mount() {},
-	routes: []
+{
+  //methods: {},
+  //mount() {},
+  routes: []
 }
 ```
 
@@ -722,10 +714,10 @@ This is feasible via SepCon's `setConfiguration` method.
 ```javascript
 import SepCon from 'sepcon';
 SepCon.setConfiguration({
-    router: {
-        mode: 'hash',
-        root: '/home'
-    }
+  router: {
+    mode: 'hash',
+    root: '/home'
+  }
 });
 ```
 
