@@ -10,14 +10,14 @@ export default class Data {
         this.definition = common.clone(definition);
         this.id = meta.id;
         this.root = root;
-        this.data = definition;
+        this.data = common.clone(definition);
     }
     setProps(props) {
         props = common.formatValueForValidJSON(props);
         return changes.setChanges(this.data, props, true);
     }
     resetProps() {
-        let props = common.formatValueForValidJSON(this.definition.data);
+        let props = common.formatValueForValidJSON(this.definition);
         return changes.setChanges(this.data, props, true);
     }
     /**
