@@ -18,6 +18,10 @@ export default class Component {
         this.scoped.id = element.getAttribute(TAG_IDENTIFIER);
         this.scoped.bindEvents = () => this.bindEvents();
 
+        this.scoped.update = () => {
+            this.onDescendantChange();
+        }
+
         delete this.scoped.state;
 
         this.parent = parent;

@@ -69,6 +69,7 @@ export default class ComponentTag {
             if (this._id) {
                 htmlArray.push(`${TAG_IDENTIFIER}="${this._id}"`);
             }
+            htmlArray.push('data-sepcon-component="true"');
             html = `<${htmlArray.join(' ')}>`;
         }
         if (!part) {
