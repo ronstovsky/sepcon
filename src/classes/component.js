@@ -19,8 +19,8 @@ export default class Component {
         this.scoped.bindEvents = () => this.bindEvents();
 
         this.scoped.update = () => {
-            this.onDescendantChange();
-        }
+            this.onDescendantChange(this);
+        };
 
         delete this.scoped.state;
 

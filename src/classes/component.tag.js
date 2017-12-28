@@ -10,6 +10,9 @@ export default class ComponentTag {
         this._id = null;
         this._html = null;
     }
+    toString() {
+        return this.render();
+    }
     html(html) {
         this._html = html;
         return this;

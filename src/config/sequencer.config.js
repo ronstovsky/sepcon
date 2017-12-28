@@ -22,6 +22,10 @@ export default {
                 action: 'mount'
             },
             {
+                target: 'state',
+                action: 'attach'
+            },
+            {
                 target: 'component',
                 action: 'render'
             },
@@ -42,7 +46,7 @@ export default {
         sequence: [
             {
                 target: 'state',
-                action: 'resume'
+                action: 'attach'
             },
             {
                 target: 'component',

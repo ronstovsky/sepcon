@@ -118,7 +118,8 @@ class SepConClass {
     createComponent(meta, def = {}) {
         let created = create.call(this, meta, def, 'component', this.root.components, this.root.classes.ComponentDefinition);
         return Object.assign(created, {
-            createTag: () => this.createTag(meta.id)
+            createTag: () => this.createTag(meta.id),
+            toString: () => this.createTag(meta.id).render()
         });
     }
     createTag(id) {
