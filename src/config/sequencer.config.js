@@ -210,4 +210,18 @@ export default {
             }
         ]
     },
+    serviceRequest: {
+        send: function (step, hook, params) {
+            if (hook === false) {
+                this.base.request(params[0], params[2]);
+            }
+            return [params[0], params[1]];
+        },
+        sequence: [
+            {
+                target: 'base',
+                action: 'request'
+            },
+        ]
+    }
 };

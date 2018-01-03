@@ -47,8 +47,9 @@ describe('Service Channels', ()=> {
             expect(value).to.be.equal('testing');
             done();
         });
-        scope.service('testService' + testNum).requests.clickMe();
-        scope.service('testService' + testNum).channels.testArgs('test'+testNum, null);
+        scope.service('testService' + testNum).requests.clickMe().then(() => {
+            scope.service('testService' + testNum).channels.testArgs('test'+testNum, null);
+        });
     });
     it('should get a response immediately (still async) on channel subscription if has cache', function(done) {
         scope.service('testService' + (testNum-1)).channels.testArgs('test'+testNum, (value) => {

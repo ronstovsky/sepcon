@@ -1,0 +1,81 @@
+import SepCon from '../src/index';
+
+let expect = chai.expect;
+
+describe('Service Lifecycle', () => {
+    let testNum = 0;
+    const scope = SepCon.createScope();
+
+    beforeEach(function () {
+        testNum++;
+    });
+
+    it('should execute the request lifecycle when a request is being made', function (done) {
+        let count = 0;
+        scope.createService({
+            id: 'testService' + testNum,
+        }, {
+            requests: {
+                testArgs(resolve, reject) {
+                }
+            },
+            'pre:request'() {
+                expect(count).to.be.equal(0);
+                count++;
+            },
+            request() {
+                expect(count).to.be.equal(1);
+                count++;
+            },
+            'post:request'() {
+                expect(count).to.be.equal(2);
+                done();
+            }
+        });
+
+        scope.service('testService' + testNum).requests.testArgs();
+    });
+    it('should have the name and arguments on request lifecycle', done => {
+        scope.createService({
+            id: 'test' + testNum,
+        }, {
+            requests: {
+                someRequest(resolve, reject) {
+                }
+            },
+            'pre:request'(name, args) {
+                expect(name).to.be.equal('someRequest');
+                expect(args).to.be.an.array;
+                expect(args[0]).to.be.equal(5);
+                done();
+            }
+        });
+        scope.service('test' + testNum).requests.someRequest(5);
+    });
+
+    it('should disable response if returns false', done => {
+        let wentThroughLifecycle = false;
+        let killDoneTimer = setTimeout(() => {
+            expect(wentThroughLifecycle).to.be.true;
+            done();
+        }, 100);
+
+        scope.createService({
+            id: 'test' + testNum,
+        }, {
+            requests: {
+                giveMeNow(resolve, reject) {
+                    clearTimeout(killDoneTimer);
+                    resolve('ok don\'t hurt me');
+                }
+            },
+            'pre:request'(name) {
+                wentThroughLifecycle = true;
+                if (name === 'giveMeNow') {
+                    return false;
+                }
+            }
+        });
+        scope.service('test' + testNum).requests.giveMeNow();
+    });
+});

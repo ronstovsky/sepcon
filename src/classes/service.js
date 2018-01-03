@@ -18,19 +18,18 @@ export default class Service {
             channels: {}
         };
 
-        for (let methodName in this.definition.requests) {
-            this.scoped.requests[methodName] = function() {
-                return new Promise((resolve, reject) => {
-                    let args = [resolve, reject].concat([].slice.call(arguments));
-                    this.definition.requests[methodName].apply(this.scoped, args);
-                });
-            }.bind(this);
+        for (let name in this.definition.requests) {
+            this.scoped.requests[name] = this.buildRequest.bind(this, name);
         }
 
         Object.keys(this.definition.channels).forEach(key => {
             this.scoped.channels[key] = function() {
                 this.cache.channels[key] = this.definition.channels[key].apply(this.scoped, arguments);
-                this.channels.filter(channel => channel.key === key).forEach(channel => channel.callback(this.cache.channels[key]));
+                this.channels.filter(channel => {
+                    return channel.key === key && typeof channel.callback === 'function';
+                }).forEach(channel => {
+                    channel.callback(this.cache.channels[key]);
+                });
             }.bind(this);
         });
 
@@ -64,6 +63,20 @@ export default class Service {
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
         this.sequencer.startSequence('mountBase');
+    }
+
+    buildRequest(name) {
+        let args = [].slice.call(arguments);
+        args.shift();
+        return new Promise((resolve, reject) => {
+            let _args = [resolve, reject].concat(args);
+            //TODO - if cache...
+            this.sequencer.startSequence('serviceRequest', [name, args, _args]);
+        });
+    }
+
+    request(name, args) {
+        this.definition.requests[name].apply(this.scoped, args);
     }
 
     addRoutes() {

@@ -8,4 +8,5 @@ import './data.extend.test';
 import './component.global.test';
 import './service.requests.test';
 import './service.channels.test';
+import './service.lifecycle.test';
 import './performance.test';
