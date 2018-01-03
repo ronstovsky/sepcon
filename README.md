@@ -1,4 +1,4 @@
-# SepCon JS [![NPM Version](https://img.shields.io/npm/v/sepcon.svg?style=flat)]() [![Github Releases](https://img.shields.io/github/downloads/sepcon-rnd/sepcon/latest/total.svg?style=flat)]()
+# SepCon JS [![Version](https://img.shields.io/npm/v/sepcon.svg?style=flat)](https://www.npmjs.com/package/sepcon) [![Downloads](https://img.shields.io/npm/dt/sepcon.svg?style=flat)](https://www.npmjs.com/package/sepcon)
 Probably not the last JS framework you'll live to see
 
 
