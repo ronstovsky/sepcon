@@ -87,7 +87,7 @@ class SepConClass {
             services = this.root.services;
         }
         if(services[service]) {
-            return services[service].scoped;
+            return services[service].api;
         }
         return null;
     }
