@@ -11,11 +11,11 @@ export default class Service {
         this.root = root;
         this.scoped = common.clone(definition);
 
-        for (let methodName in this.definition.methods) {
-            this.scoped.methods[methodName] = function() {
+        for (let methodName in this.definition.requests) {
+            this.scoped.requests[methodName] = function() {
                 return new Promise((resolve, reject) => {
                     let args = [resolve, reject].concat([].slice.call(arguments));
-                    this.definition.methods[methodName].apply(this.scoped, args);
+                    this.definition.requests[methodName].apply(this.scoped, args);
                 });
             }.bind(this);
         }
