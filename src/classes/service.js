@@ -6,7 +6,7 @@ export default class Service {
         if (meta.extend) {
             definition = common.extend(meta.extend, definition);
         }
-        definition = Object.assign({ requests: {}, channels: {} }, definition);
+        definition = Object.assign({requests: {}, channels: {}}, definition);
         this.definition = definition;
         this.id = meta.id;
         this.root = root;
@@ -23,14 +23,7 @@ export default class Service {
         }
 
         Object.keys(this.definition.channels).forEach(key => {
-            this.scoped.channels[key] = function() {
-                this.cache.channels[key] = this.definition.channels[key].apply(this.scoped, arguments);
-                this.channels.filter(channel => {
-                    return channel.key === key && typeof channel.callback === 'function';
-                }).forEach(channel => {
-                    channel.callback(this.cache.channels[key]);
-                });
-            }.bind(this);
+            this.scoped.channels[key] = this.buildChannel.bind(this, key);
         });
 
         this.api = {};
@@ -38,9 +31,8 @@ export default class Service {
         this.api.channels = {};
         Object.keys(this.scoped.channels).forEach(key => {
             this.api.channels[key] = (id, callback) => {
-                let channel = this.channels.filter(chn => key === chn.key && id === chn.id);
-                channel = channel.length > 0 ? channel[0] : null;
-                if(!channel) {
+                let channel = this.getValidChannels(key, id, false)[0];
+                if (!channel) {
                     channel = {id, callback, key};
                     this.channels.push(channel);
                 }
@@ -48,7 +40,7 @@ export default class Service {
                     channel.callback = callback;
                 }
                 Promise.resolve().then(() => {
-                    if(this.cache.channels[key] !== undefined && channel && typeof channel.callback === 'function') {
+                    if (this.cache.channels[key] && channel.callback && typeof channel.callback === 'function') {
                         channel.callback(this.cache.channels[key]);
                     }
                 });
@@ -57,7 +49,7 @@ export default class Service {
 
         this.scoped.router = this.root.router;
 
-        if(meta.provider) {
+        if (meta.provider) {
             this.scoped.provider = this.root.providers[meta.provider].scoped;
         }
 
@@ -66,8 +58,7 @@ export default class Service {
     }
 
     buildRequest(name) {
-        let args = [].slice.call(arguments);
-        args.shift();
+        let args = [].slice.call(arguments).slice(1);
         return new Promise((resolve, reject) => {
             let _args = [resolve, reject].concat(args);
             //TODO - if cache...
@@ -78,6 +69,30 @@ export default class Service {
     request(name, args) {
         this.definition.requests[name].apply(this.scoped, args);
     }
+
+    buildChannel(key) {
+        let args = [].slice.call(arguments).slice(1);
+        this.sequencer.startSequence('serviceChannel', [key, args]);
+    }
+
+    channel(key, args) {
+        let channelCache = this.cache.channels[key] = this.definition.channels[key].apply(this.scoped, args);
+        const subscribers = this.getValidChannels(key);
+
+        subscribers.forEach(sub => {
+            sub.callback(channelCache);
+        });
+    }
+
+    getValidChannels(key, id = false, isType = true) {
+        return this.channels.filter(channel => {
+            const sameKey = key === channel.key;
+            const sameId = id ? id === channel.id : true;
+            const isCallbackFunction = isType ? typeof channel.callback === 'function' : true;
+            return sameKey && sameId && isCallbackFunction;
+        });
+    }
+
 
     addRoutes() {
         if (this.definition.routes) {

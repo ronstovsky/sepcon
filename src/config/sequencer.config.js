@@ -215,12 +215,26 @@ export default {
             if (hook === false) {
                 this.base.request(params[0], params[2]);
             }
-            return [params[0], params[1]];
+            return params
         },
         sequence: [
             {
                 target: 'base',
                 action: 'request'
+            },
+        ]
+    },
+    serviceChannel: {
+        send: function (step, hook, params) {
+            if (hook === false) {
+                this.base.channel(params[0], params[1]);
+            }
+            return params;
+        },
+        sequence: [
+            {
+                target: 'base',
+                action: 'channel'
             },
         ]
     }

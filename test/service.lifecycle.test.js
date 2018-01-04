@@ -45,7 +45,7 @@ describe('Service Lifecycle', () => {
             },
             'pre:request'(name, args) {
                 expect(name).to.be.equal('someRequest');
-                expect(args).to.be.an.array;
+                expect(args).to.be.an('array');
                 expect(args[0]).to.be.equal(5);
                 done();
             }
@@ -56,7 +56,7 @@ describe('Service Lifecycle', () => {
     it('should disable response if returns false', done => {
         let wentThroughLifecycle = false;
         let killDoneTimer = setTimeout(() => {
-            expect(wentThroughLifecycle).to.be.true;
+            expect(wentThroughLifecycle).to.equal(true);
             done();
         }, 100);
 
@@ -78,4 +78,34 @@ describe('Service Lifecycle', () => {
         });
         scope.service('test' + testNum).requests.giveMeNow();
     });
+
+    it('should have lifecycle event for channels', done => {
+        let isOk = true;
+        scope.createService({
+            id: 'testService' + testNum,
+        }, {
+            channels: {
+                testArgs() {
+                    return 'testing';
+                }
+            },
+            requests: {
+                clickMe() {
+                    this.channels.testArgs();
+                }
+            },
+            'pre:channel'() {
+                setTimeout(() => isOk && done(), 100);
+                return false;
+            }
+        });
+
+        scope.service('testService' + testNum).channels.testArgs('test'+testNum, (value) => {
+            isOk = false;
+            expect(false);
+        });
+        scope.service('testService' + testNum).requests.clickMe().then(() => {
+            scope.service('testService' + testNum).channels.testArgs('test'+testNum, null);
+        });
+    })
 });
