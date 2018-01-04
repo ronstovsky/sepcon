@@ -107,5 +107,5 @@ describe('Service Lifecycle', () => {
         scope.service('testService' + testNum).requests.clickMe().then(() => {
             scope.service('testService' + testNum).channels.testArgs('test'+testNum, null);
         });
-    })
+    });
 });

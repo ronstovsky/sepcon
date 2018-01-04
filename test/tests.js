@@ -9,4 +9,5 @@ import './component.global.test';
 import './service.requests.test';
 import './service.channels.test';
 import './service.lifecycle.test';
+import './service.cache.requests.test';
 import './performance.test';

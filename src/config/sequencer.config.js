@@ -215,7 +215,7 @@ export default {
             if (hook === false) {
                 this.base.request(params[0], params[2]);
             }
-            return params
+            return params;
         },
         sequence: [
             {

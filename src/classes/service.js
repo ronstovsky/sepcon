@@ -11,20 +11,25 @@ export default class Service {
         this.id = meta.id;
         this.root = root;
         this.scoped = common.clone(definition);
-
+        this.promises = {};
         this.channels = [];
         this.cache = {
             requests: {},
             channels: {}
         };
 
-        for (let name in this.definition.requests) {
-            this.scoped.requests[name] = this.buildRequest.bind(this, name);
-        }
+
+        Object.keys(this.definition.requests).forEach(key => {
+            this.scoped.requests[key] = this.buildRequest.bind(this, key);
+            this.promises[key] = {};
+            this.cache.requests[key] = {};
+        });
 
         Object.keys(this.definition.channels).forEach(key => {
             this.scoped.channels[key] = this.buildChannel.bind(this, key);
         });
+
+        this.buildCache();
 
         this.api = {};
         this.api.requests = this.scoped.requests;
@@ -59,15 +64,25 @@ export default class Service {
 
     buildRequest(name) {
         let args = [].slice.call(arguments).slice(1);
-        return new Promise((resolve, reject) => {
+        let promise = this.promises[name][args.join(',')] = new Promise((resolve, reject) => {
             let _args = [resolve, reject].concat(args);
-            //TODO - if cache...
             this.sequencer.startSequence('serviceRequest', [name, args, _args]);
         });
+        return promise;
     }
 
     request(name, args) {
-        this.definition.requests[name].apply(this.scoped, args);
+        const cache = this.checkRequestCache(name, args.slice(2)); //need to slice resolve and reject arguments
+        if (cache === undefined) {
+            this.definition.requests[name].apply(this.scoped, args);
+            const _args = args.slice(2);
+            this.promises[name][_args.join(',')].then(function() {
+                this.setRequestCache(name, _args, [].slice.call(arguments));
+            }.bind(this));
+        }
+        else {
+            args[0].apply(null, cache);
+        }
     }
 
     buildChannel(key) {
@@ -93,6 +108,39 @@ export default class Service {
         });
     }
 
+    buildCache() {
+        if (!this.definition.cache) {
+            return;
+        }
+        if (this.definition.cache.requests) {
+            Object.keys(this.definition.cache.requests).forEach(key => {
+                this.cache.requests[key] = this.buildCacheItem(key, this.definition.cache.requests[key]);
+            });
+        }
+    }
+
+    buildCacheItem(key, config) {
+        switch (config.storage) {
+            case 'local':
+            default:
+                // return localStorage.getItem('service-request-'+this.root.hash+'-'+this.id+':'+key);
+                break;
+        }
+        return {};
+    }
+    checkRequestCache(key, args) {
+        const stringifiedArgs = args.join(',');
+        if (this.cache.requests[key][stringifiedArgs]) {
+            return this.cache.requests[key][stringifiedArgs];
+        }
+        return undefined;
+    }
+    setRequestCache(key, args, value) {
+        if(this.definition.cache.requests && this.definition.cache.requests[key]) {
+            const stringifiedArgs = args.join(',');
+            this.cache.requests[key][stringifiedArgs] = value;
+        }
+    }
 
     addRoutes() {
         if (this.definition.routes) {
