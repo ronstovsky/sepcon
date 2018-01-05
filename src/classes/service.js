@@ -36,6 +36,10 @@ export default class Service {
             this.scoped.channels[key] = this.buildChannel.bind(this, key);
         });
 
+        this.scoped.clearCache = (type, key, args) => {
+            this.clearCache(this.definition.cache[type][key], type, key, args);
+        };
+
         this.api = {};
         this.api.requests = this.scoped.requests;
         this.api.channels = {};
@@ -127,29 +131,37 @@ export default class Service {
         }
     }
     writeCache(config, type, key, args, value) {
+        const updateRecord = (json, args, record) => {
+            const records = json ? JSON.parse(json) : {};
+            records[args] = record;
+            return JSON.stringify(records);
+        };
         const argsStr = this.getArgumentsAsIndex(args);
         const duration = config.duration || false;
         const storage = config.storage;
-        const record = JSON.stringify({
+        const record = {
             value,
             ts: Date.now()
-        });
-        const storageKey = `${this.root.hash || ''}:${this.id}|${type}|${key}[${argsStr}]`;
+        };
+        const storageKey = this.getStorageKey(type, key);
+        let recordsJson;
         switch(storage) {
             default:
             case 'local':
-                localStorage.setItem(storageKey, record);
+                recordsJson = localStorage.getItem(storageKey);
+                recordsJson = updateRecord(recordsJson, argsStr, record);
+                localStorage.setItem(storageKey, recordsJson);
                 break;
             case 'session':
-                sessionStorage.setItem(storageKey, record);
+                recordsJson = sessionStorage.getItem(storageKey);
+                recordsJson = updateRecord(recordsJson, argsStr, record);
+                sessionStorage.setItem(storageKey, recordsJson);
                 break;
             case 'cookie':
-                if(duration) {
-                    document.cookie = `${storageKey}=${value};expires=${(Date.now() + duration).toGMTString()};path=/`;
-                }
-                else {
-                    document.cookie = `${storageKey}=${value};path=/`;
-                }
+                recordsJson = common.getCookie(storageKey);
+                recordsJson = updateRecord(recordsJson, argsStr, record);
+                common.setCookie(storageKey, recordsJson);
+                document.cookie = `${storageKey}=${value};path=/`;
                 break;
             case false:
                 this.cache.requests[key][argsStr] = record;
@@ -158,52 +170,102 @@ export default class Service {
     }
     readCache(config, type, key, args) {
         const argsStr = this.getArgumentsAsIndex(args);
-        const duration = config.duration || false;
-        const minTime = duration ? Date.now() - duration : 0;
-        const storage = config.storage;
-        const storageKey = `${this.root.hash || ''}:${this.id}|${type}|${key}[${argsStr}]`;
-        let value;
+        const minTime = config.duration ? Date.now() - parseInt(config.duration) : 0;
+        const storageKey = this.getStorageKey(type, key);
+        let records;
+        let record;
+        let recordsJson;
 
-        switch(storage) {
+        switch(config.storage) {
             default:
             case 'local':
-                value = localStorage.getItem(storageKey);
+                records = JSON.parse(localStorage.getItem(storageKey));
                 break;
             case 'session':
-                value = sessionStorage.getItem(storageKey);
+                records = JSON.parse(sessionStorage.getItem(storageKey));
                 break;
             case 'cookie':
-                const cookies = document.cookie.split(';').forEach(cookie => {
-                    const cookiePair = cookie.split('=');
-                    if(cookiePair[0] === storageKey) {
-                        value = cookiePair[1];
-                        return;
-                    }
-                });
+                records = JSON.parse(common.getCookie(storageKey));
                 break;
             case false:
-                value = this.cache.requests[key][argsStr];
+                records = this.cache.requests[key];
                 break;
         }
-
-        if(!value) {
+        if(!records) {
             return undefined;
         }
-        const record = JSON.parse(value);
+
+        record = records[argsStr];
+        if(!record) {
+            return undefined;
+        }
         if(record.ts > minTime) {
             return record.value;
         }
         else {
+            delete records[argsStr];
+            recordsJson = JSON.stringify(records);
             switch(config.storage) {
                 case 'local':
-                    localStorage.removeItem('storageKey');
+                    localStorage.setItem(storageKey, recordsJson);
                     break;
                 case 'session':
-                    sessionStorage.removeItem('storageKey');
+                    sessionStorage.setItem(storageKey, recordsJson);
+                    break;
+                case 'cookie':
+                    common.setCookie(storageKey, recordsJson);
+                    break;
+                case false:
+                    this.cache.requests[key][argsStr] = false;
                     break;
             }
         }
         return undefined;
+    }
+    clearCache(config, type, key, args) {
+        const argsStr = this.getArgumentsAsIndex(args);
+        let records;
+        let recordsJson;
+        switch(config.storage) {
+            default:
+            case 'local':
+                records = JSON.parse(localStorage.getItem(storageKey));
+                break;
+            case 'session':
+                records = JSON.parse(sessionStorage.getItem(storageKey));
+                break;
+            case 'cookie':
+                records = JSON.parse(common.getCookie(storageKey));
+                break;
+            case false:
+                records = this.cache.requests[key];
+                break;
+        }
+        if(args) {
+            const argsStr = this.getArgumentsAsIndex(args);
+            delete records[argsStr];
+        }
+        else {
+            records = {};
+        }
+        recordsJson = JSON.stringify(records);
+        switch(config.storage) {
+            case 'local':
+                localStorage.setItem(storageKey, recordsJson);
+                break;
+            case 'session':
+                sessionStorage.setItem(storageKey, recordsJson);
+                break;
+            case 'cookie':
+                common.setCookie(storageKey, recordsJson);
+                break;
+            case false:
+                this.cache.requests[key] = records;
+                break;
+        }
+    }
+    getStorageKey(type, key) {
+        return `${this.root.hash || ''}:${this.id}|${type}|${key}`;
     }
     checkIfRequestCacheValid(key) {
         if (!this.definition.cache.requests[key]) {
