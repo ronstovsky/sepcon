@@ -6,7 +6,14 @@ export default class Service {
         if (meta.extend) {
             definition = common.extend(meta.extend, definition);
         }
-        definition = Object.assign({requests: {}, channels: {}}, definition);
+        definition = Object.assign({
+            requests: {},
+            channels: {},
+            cache: {
+                requests: {},
+                channels: {}
+            }}, definition);
+
         this.definition = definition;
         this.id = meta.id;
         this.root = root;
@@ -28,8 +35,6 @@ export default class Service {
         Object.keys(this.definition.channels).forEach(key => {
             this.scoped.channels[key] = this.buildChannel.bind(this, key);
         });
-
-        this.buildCache();
 
         this.api = {};
         this.api.requests = this.scoped.requests;
@@ -64,7 +69,7 @@ export default class Service {
 
     buildRequest(name) {
         let args = [].slice.call(arguments).slice(1);
-        let promise = this.promises[name][args.join(',')] = new Promise((resolve, reject) => {
+        let promise = this.promises[name][this.getArgumentsAsIndex(args)] = new Promise((resolve, reject) => {
             let _args = [resolve, reject].concat(args);
             this.sequencer.startSequence('serviceRequest', [name, args, _args]);
         });
@@ -72,11 +77,11 @@ export default class Service {
     }
 
     request(name, args) {
-        const cache = this.checkRequestCache(name, args.slice(2)); //need to slice resolve and reject arguments
+        const cache = this.getRequestCache(name, args.slice(2)); //need to slice resolve and reject arguments
         if (cache === undefined) {
             this.definition.requests[name].apply(this.scoped, args);
             const _args = args.slice(2);
-            this.promises[name][_args.join(',')].then(function() {
+            this.promises[name][this.getArgumentsAsIndex(_args)].then(function () {
                 this.setRequestCache(name, _args, [].slice.call(arguments));
             }.bind(this));
         }
@@ -108,38 +113,106 @@ export default class Service {
         });
     }
 
-    buildCache() {
-        if (!this.definition.cache) {
-            return;
-        }
-        if (this.definition.cache.requests) {
-            Object.keys(this.definition.cache.requests).forEach(key => {
-                this.cache.requests[key] = this.buildCacheItem(key, this.definition.cache.requests[key]);
-            });
-        }
-    }
-
-    buildCacheItem(key, config) {
-        switch (config.storage) {
-            case 'local':
-            default:
-                // return localStorage.getItem('service-request-'+this.root.hash+'-'+this.id+':'+key);
-                break;
-        }
-        return {};
-    }
-    checkRequestCache(key, args) {
-        const stringifiedArgs = args.join(',');
-        if (this.cache.requests[key][stringifiedArgs]) {
-            return this.cache.requests[key][stringifiedArgs];
+    getRequestCache(key, args) {
+        if(this.checkIfRequestCacheValid(key)) {
+            const config = this.definition.cache.requests[key];
+            return this.readCache(config, 'request', key, args);
         }
         return undefined;
     }
     setRequestCache(key, args, value) {
-        if(this.definition.cache.requests && this.definition.cache.requests[key]) {
-            const stringifiedArgs = args.join(',');
-            this.cache.requests[key][stringifiedArgs] = value;
+        if(this.checkIfRequestCacheValid(key)) {
+            const config = this.definition.cache.requests[key];
+            this.writeCache(config, 'request', key, args, value);
         }
+    }
+    writeCache(config, type, key, args, value) {
+        const argsStr = this.getArgumentsAsIndex(args);
+        const duration = config.duration || false;
+        const storage = config.storage;
+        const record = JSON.stringify({
+            value,
+            ts: Date.now()
+        });
+        const storageKey = `${this.root.hash || ''}:${this.id}|${type}|${key}[${argsStr}]`;
+        switch(storage) {
+            default:
+            case 'local':
+                localStorage.setItem(storageKey, record);
+                break;
+            case 'session':
+                sessionStorage.setItem(storageKey, record);
+                break;
+            case 'cookie':
+                if(duration) {
+                    document.cookie = `${storageKey}=${value};expires=${(Date.now() + duration).toGMTString()};path=/`;
+                }
+                else {
+                    document.cookie = `${storageKey}=${value};path=/`;
+                }
+                break;
+            case false:
+                this.cache.requests[key][argsStr] = record;
+                break;
+        }
+    }
+    readCache(config, type, key, args) {
+        const argsStr = this.getArgumentsAsIndex(args);
+        const duration = config.duration || false;
+        const minTime = duration ? Date.now() - duration : 0;
+        const storage = config.storage;
+        const storageKey = `${this.root.hash || ''}:${this.id}|${type}|${key}[${argsStr}]`;
+        let value;
+
+        switch(storage) {
+            default:
+            case 'local':
+                value = localStorage.getItem(storageKey);
+                break;
+            case 'session':
+                value = sessionStorage.getItem(storageKey);
+                break;
+            case 'cookie':
+                const cookies = document.cookie.split(';').forEach(cookie => {
+                    const cookiePair = cookie.split('=');
+                    if(cookiePair[0] === storageKey) {
+                        value = cookiePair[1];
+                        return;
+                    }
+                });
+                break;
+            case false:
+                value = this.cache.requests[key][argsStr];
+                break;
+        }
+
+        if(!value) {
+            return undefined;
+        }
+        const record = JSON.parse(value);
+        if(record.ts > minTime) {
+            return record.value;
+        }
+        else {
+            switch(config.storage) {
+                case 'local':
+                    localStorage.removeItem('storageKey');
+                    break;
+                case 'session':
+                    sessionStorage.removeItem('storageKey');
+                    break;
+            }
+        }
+        return undefined;
+    }
+    checkIfRequestCacheValid(key) {
+        if (!this.definition.cache.requests[key]) {
+            return false;
+        }
+        return true;
+    }
+    getArgumentsAsIndex(args) {
+        return args.map(arg => arg && typeof arg === 'object' ? JSON.stringify(arg) : arg.toString()).join(',');
     }
 
     addRoutes() {
