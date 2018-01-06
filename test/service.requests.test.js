@@ -2,7 +2,7 @@ import SepCon from '../src/index';
 
 let expect = chai.expect;
 
-describe('Service Methods', ()=> {
+describe('Service Requests', ()=> {
     let testNum = 0;
     const scope = SepCon.createScope();
     scope.createProvider({
@@ -16,7 +16,7 @@ describe('Service Methods', ()=> {
     scope.createService({
         id: 'testService',
     }, {
-        methods: {
+        requests: {
             addNumbers(resolve, reject, num1, num2) {
                 if (num1 && num2) {
                     resolve(num1 + num2);
@@ -32,11 +32,11 @@ describe('Service Methods', ()=> {
         testNum++;
     });
 
-    it('should have resolve and reject as arguments at service methods', function (done) {
+    it('should have resolve and reject as arguments at service requests', function (done) {
         scope.createService({
             id: 'testService' + testNum,
         }, {
-            methods: {
+            requests: {
                 testArgs(resolve, reject) {
                     expect(resolve).to.be.a('function');
                     expect(reject).to.be.a('function');
@@ -45,16 +45,16 @@ describe('Service Methods', ()=> {
             }
         });
 
-        scope.service('testService' + testNum).testArgs();
+        scope.service('testService' + testNum).requests.testArgs();
     });
     it('should return result to .then()', function (done) {
-        scope.service('testService').addNumbers(1, 2).then((res) => {
+        scope.service('testService').requests.addNumbers(1, 2).then((res) => {
             expect(res).to.be.equal(3);
             done();
         });
     });
     it('should return failure result to .then() to second function', function (done) {
-        scope.service('testService').addNumbers(1).then((res) => {
+        scope.service('testService').requests.addNumbers(1).then((res) => {
             expect(false);
         }, (res) => {
             expect(res).to.be.equal('need two numbers');
@@ -93,7 +93,7 @@ describe('Service Methods', ()=> {
             id: 'testService',
             provider: 'testProvider' + testNum,
         }, {
-            methods: {
+            requests: {
                 someMethod() {
                     expect(this.provider.someProp).to.be.equal(100);
                     done();
@@ -104,7 +104,7 @@ describe('Service Methods', ()=> {
             provider: 'testProvider' + testNum
         });
         //setTimeout(() => {
-        scope.service('testService').someMethod();
+        scope.service('testService').requests.someMethod();
 
         //}, 500);
     });

@@ -87,7 +87,7 @@ class SepConClass {
             services = this.root.services;
         }
         if(services[service]) {
-            return services[service].scoped.methods;
+            return services[service].api;
         }
         return null;
     }
@@ -130,7 +130,7 @@ class SepConClass {
 const _sepCon = (function sepConHandler() {
     let sepCon = new SepConClass();
     sepCon.createScope = (options = {}) => {
-        options.hash = parseInt(Date.now()*1000+Math.round(Math.random()*1000)).toString(36);
+        options.hash = options.hash || parseInt(Date.now()*1000+Math.round(Math.random()*1000)).toString(36);
         return new SepConClass(options);
     };
     return sepCon;

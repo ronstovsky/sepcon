@@ -194,5 +194,16 @@ export default {
             item = this.getComponent(sameTagList, element);
         }
         return item;
+    },
+    getCookie(key) {
+        return document.cookie.split(';').forEach(cookie => {
+            const cookiePair = cookie.split('=');
+            if(cookiePair[0] === key) {
+                return cookiePair[1];
+            }
+        });
+    },
+    setCookie(key, value) {
+        document.cookie = `${key}=${value};path=/`;
     }
 };
