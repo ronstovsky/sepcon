@@ -10,4 +10,5 @@ import './service.requests.test';
 import './service.channels.test';
 import './service.lifecycle.test';
 import './service.cache.requests.test';
+import './service.cache.channels.test';
 import './performance.test';

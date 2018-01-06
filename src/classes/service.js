@@ -8,18 +8,20 @@ export default class Service {
         }
         definition = Object.assign({
             requests: {},
-            channels: {},
-            cache: {
-                requests: {},
-                channels: {}
-            }}, definition);
+            channels: {}
+        }, definition);
+        definition.cache = Object.assign({
+            requests: {},
+            channels: {}
+        }, definition.cache);
 
         this.definition = definition;
         this.id = meta.id;
         this.root = root;
         this.scoped = common.clone(definition);
         this.promises = {};
-        this.channels = [];
+        this.subscribes = [];
+        this.channelsLastCache = {};
         this.cache = {
             requests: {},
             channels: {}
@@ -34,9 +36,13 @@ export default class Service {
 
         Object.keys(this.definition.channels).forEach(key => {
             this.scoped.channels[key] = this.buildChannel.bind(this, key);
+            this.cache.channels[key] = {};
         });
 
         this.scoped.clearCache = (type, key, args) => {
+            if(!this.definition.cache[type] || !this.definition.cache[type][key]) {
+                return;
+            }
             this.clearCache(this.definition.cache[type][key], type, key, args);
         };
 
@@ -45,17 +51,20 @@ export default class Service {
         this.api.channels = {};
         Object.keys(this.scoped.channels).forEach(key => {
             this.api.channels[key] = (id, callback) => {
-                let channel = this.getValidChannels(key, id, false)[0];
+                let channel = this.getValidSubscribers(key, id, false)[0];
                 if (!channel) {
                     channel = {id, callback, key};
-                    this.channels.push(channel);
+                    this.subscribes.push(channel);
                 }
                 else {
                     channel.callback = callback;
                 }
+
+                //on subscribe - will have a callback invoked if that channel was active prior to the subscribe
                 Promise.resolve().then(() => {
-                    if (this.cache.channels[key] && channel.callback && typeof channel.callback === 'function') {
-                        channel.callback(this.cache.channels[key]);
+                    const lastMessageFromChannel = this.channelsLastCache[key];
+                    if (lastMessageFromChannel && channel.callback && typeof channel.callback === 'function') {
+                        channel.callback(lastMessageFromChannel);
                     }
                 });
             };
@@ -94,42 +103,73 @@ export default class Service {
         }
     }
 
+    checkIfRequestCacheValid(key) {
+        if (!this.definition.cache.requests[key]) {
+            return false;
+        }
+        return true;
+    }
+
+    getRequestCache(key, args) {
+        if (this.checkIfRequestCacheValid(key)) {
+            const config = this.definition.cache.requests[key];
+            return this.readCache(config, 'requests', key, args);
+        }
+        return undefined;
+    }
+
+    setRequestCache(key, args, value) {
+        if (this.checkIfRequestCacheValid(key)) {
+            const config = this.definition.cache.requests[key];
+            this.writeCache(config, 'requests', key, args, value);
+        }
+    }
+
     buildChannel(key) {
         let args = [].slice.call(arguments).slice(1);
         this.sequencer.startSequence('serviceChannel', [key, args]);
     }
-
     channel(key, args) {
-        let channelCache = this.cache.channels[key] = this.definition.channels[key].apply(this.scoped, args);
-        const subscribers = this.getValidChannels(key);
-
+        let value = this.getChannelCache(key, args); //need to slice resolve and reject arguments
+        const subscribers = this.getValidSubscribers(key);
+        if (value === undefined) {
+            value = this.definition.channels[key].apply(this.scoped, args);
+            this.setChannelCache(key, args, value);
+        }
         subscribers.forEach(sub => {
-            sub.callback(channelCache);
+            sub.callback(value);
         });
     }
-
-    getValidChannels(key, id = false, isType = true) {
-        return this.channels.filter(channel => {
+    getValidSubscribers(key, id = false, isType = true) {
+        return this.subscribes.filter(channel => {
             const sameKey = key === channel.key;
             const sameId = id ? id === channel.id : true;
             const isCallbackFunction = isType ? typeof channel.callback === 'function' : true;
             return sameKey && sameId && isCallbackFunction;
         });
     }
-
-    getRequestCache(key, args) {
-        if(this.checkIfRequestCacheValid(key)) {
-            const config = this.definition.cache.requests[key];
-            return this.readCache(config, 'request', key, args);
+    checkIfChannelCacheValid(key) {
+        if (!this.definition.cache.channels[key]) {
+            return false;
+        }
+        return true;
+    }
+    getChannelCache(key, args) {
+        if (this.checkIfChannelCacheValid(key)) {
+            const config = this.definition.cache.channels[key];
+            return this.readCache(config, 'channels', key, args);
         }
         return undefined;
     }
-    setRequestCache(key, args, value) {
-        if(this.checkIfRequestCacheValid(key)) {
-            const config = this.definition.cache.requests[key];
-            this.writeCache(config, 'request', key, args, value);
+    setChannelCache(key, args, value) {
+        if (this.checkIfChannelCacheValid(key)) {
+            const config = this.definition.cache.channels[key];
+            this.writeCache(config, 'channels', key, args, value);
         }
+        this.channelsLastCache[key] = value;
     }
+
+
     writeCache(config, type, key, args, value) {
         const updateRecord = (json, args, record) => {
             const records = json ? JSON.parse(json) : {};
@@ -145,7 +185,7 @@ export default class Service {
         };
         const storageKey = this.getStorageKey(type, key);
         let recordsJson;
-        switch(storage) {
+        switch (storage) {
             default:
             case 'local':
                 recordsJson = localStorage.getItem(storageKey);
@@ -164,10 +204,11 @@ export default class Service {
                 document.cookie = `${storageKey}=${value};path=/`;
                 break;
             case false:
-                this.cache.requests[key][argsStr] = record;
+                this.cache[type][key][argsStr] = record;
                 break;
         }
     }
+
     readCache(config, type, key, args) {
         const argsStr = this.getArgumentsAsIndex(args);
         const minTime = config.duration ? Date.now() - parseInt(config.duration) : 0;
@@ -176,7 +217,7 @@ export default class Service {
         let record;
         let recordsJson;
 
-        switch(config.storage) {
+        switch (config.storage) {
             default:
             case 'local':
                 records = JSON.parse(localStorage.getItem(storageKey));
@@ -188,24 +229,24 @@ export default class Service {
                 records = JSON.parse(common.getCookie(storageKey));
                 break;
             case false:
-                records = this.cache.requests[key];
+                records = this.cache[type][key];
                 break;
         }
-        if(!records) {
+        if (!records) {
             return undefined;
         }
 
         record = records[argsStr];
-        if(!record) {
+        if (!record) {
             return undefined;
         }
-        if(record.ts > minTime) {
+        if (record.ts > minTime) {
             return record.value;
         }
         else {
             delete records[argsStr];
             recordsJson = JSON.stringify(records);
-            switch(config.storage) {
+            switch (config.storage) {
                 case 'local':
                     localStorage.setItem(storageKey, recordsJson);
                     break;
@@ -216,17 +257,19 @@ export default class Service {
                     common.setCookie(storageKey, recordsJson);
                     break;
                 case false:
-                    this.cache.requests[key][argsStr] = false;
+                    this.cache[type][key][argsStr] = false;
                     break;
             }
         }
         return undefined;
     }
+
     clearCache(config, type, key, args) {
-        const argsStr = this.getArgumentsAsIndex(args);
         let records;
         let recordsJson;
-        switch(config.storage) {
+        const storageKey = this.getStorageKey(type, key);
+
+        switch (config.storage) {
             default:
             case 'local':
                 records = JSON.parse(localStorage.getItem(storageKey));
@@ -238,10 +281,10 @@ export default class Service {
                 records = JSON.parse(common.getCookie(storageKey));
                 break;
             case false:
-                records = this.cache.requests[key];
+                records = this.cache[type][key];
                 break;
         }
-        if(args) {
+        if (args) {
             const argsStr = this.getArgumentsAsIndex(args);
             delete records[argsStr];
         }
@@ -249,7 +292,7 @@ export default class Service {
             records = {};
         }
         recordsJson = JSON.stringify(records);
-        switch(config.storage) {
+        switch (config.storage) {
             case 'local':
                 localStorage.setItem(storageKey, recordsJson);
                 break;
@@ -260,21 +303,20 @@ export default class Service {
                 common.setCookie(storageKey, recordsJson);
                 break;
             case false:
-                this.cache.requests[key] = records;
+                this.cache[type][key] = records;
                 break;
         }
     }
+
     getStorageKey(type, key) {
         return `${this.root.hash || ''}:${this.id}|${type}|${key}`;
     }
-    checkIfRequestCacheValid(key) {
-        if (!this.definition.cache.requests[key]) {
-            return false;
-        }
-        return true;
-    }
+
     getArgumentsAsIndex(args) {
-        return args.map(arg => arg && typeof arg === 'object' ? JSON.stringify(arg) : arg.toString()).join(',');
+        return args
+            .map(arg => arg && typeof arg === 'object' ? JSON.stringify(arg) : arg ? arg.toString() : '')
+            .filter(arg => !!arg)
+            .join(',');
     }
 
     addRoutes() {
