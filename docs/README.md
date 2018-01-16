@@ -38,6 +38,11 @@ SepCon.createData({
   //...
 });
 ```
+
+### Lifecycle
+ - `mount` - Executed once, upon creation
+
+
 <a name="modifier"></a>
 ## Modifier
 The [modifier] is what we need in order to add, edit and remove values of [data] objects.
@@ -58,11 +63,13 @@ SepCon.createModifier({
     }
   },
   routes: [],
-  'pre:mount'() {}
-  mount() {}
-  'post:mount'() {}
+  lifecycle: {
+    mount() {}
+  }
 });
 ```
+### Lifecycle
+ - `mount` - Executed once, upon creation
 
 <a name="component"></a>
 ## Component
@@ -104,13 +111,19 @@ SepCon.createComponent({
     methods: {
       //the Methods Segregation is defined here
     },
-    mount() {},
-    change(changed) {}
+    lifecycle: {
+      mount() {},
+      change(changed) {}
+    }
   }
 });
 ```
-* *The [component state] has two default [lifecycles][lifecycle] - `mount` and `change`.  *
-* *`change` gets one argument - [the **changed** object][the changed object].*
+### Lifecycle
+ - `mount` - Executed once - when a new [component] is added to the DOM for the first time
+ - `attach` - Executed on every time the [component] is added to the DOM (whether it was a result of re-rendering a parent component, by changing pages on a single-page-application, etc)
+ - `change` - Executed on every state property change, whether it's a local, external nor global property.  
+  Will get 1 argument - [the ***changed*** object][the changed object]
+
 
 <a name="component-state--changed-object"></a>
 #### The **changed** object
@@ -257,11 +270,15 @@ SepCon.createComponent({
 }, {
   view: {
     events: [],
-    render() {}
+    lifecycle: {
+      render() {}
+    }
   }
 });
 ```
-* *The [Component View] has a default [Lifecycles][lifecycle] - `render`.*
+### Lifecycle
+ - `render` - Executed with the [component state]'s `mount` and `change` [Lifecycles][lifecycle]. The value that will be returned should be a string that represents html. The returned value will be inserted to the [component]'s representing DOM element.
+
 
 #### Render
 In order to render a [component], we will use the ```render``` [lifecycle].
@@ -442,31 +459,155 @@ import SepCon from 'sepcon';
 SepCon.createService({
   id: 'user'
 }, {
-  methods: {
+  requests: {
     getUser(resolve, reject, params) {
       someAjaxCall('someUrl')
         .then(response => {
           resolve(response);
+          this.channels.user(response);
         })
         .catch((error) => {
           reject(error);
         });
+    }
+  },
+  channels: {
+    user(data) {
+      return data;
     }
   }
 });
 ```
 
 ### Usage
-All service methods are, by definition, asynchronous and work as a promises. Therefore - the returned value of a given method will have the ```then``` method, which will get as arguments the "onResolve" and "onReject" handlers.
+
+#### Requests
+
+All [service] requests are, by definition, asynchronous and returns a promises. Therefore - the returned value of a given method will have the ```then``` method, which will get as arguments the "onResolve" and "onReject" handlers.
 
 ```javascript
 import SepCon from 'sepcon';
-SepCon.service('user').getUser(params)
+SepCon.service('user').requests.getUser(params)
   .then((user) => {
     console.log('user have been gotten', user);
   }, (error) => {
     console.error('error with getting the user');
   });
+```
+
+#### Channels
+
+The channels allow [modifiers] to subscribe them, and once the channel is being invoked from within the [service], all subscribers will get the returned value of that channel as an argument.
+
+```javascript
+import SepCon from 'sepcon';
+SepCon.service('user').channels.user('subscription_id', (user) => {
+  console.log('this is the user', user);
+});
+```
+
+So for instance, the `requests` usage above demonstrates an execution of a `request`, but if the dummy ajax would have been resolved - then also the `user` channel subscribers could have got that response as a "publish".  
+Also important to notice that once a channel have been invoked - from then on all new subscribers will get a response once defining the handler, out of the runtime cache. So the last "publish" will simply repeat itself for new-comers.
+
+### Lifecycle
+
+ - `mount` - Executed once, upon creation
+ - `request` - Executed whenever someone makes a `request`. Gets the request name as first argument, and an array of arguments as the second one (empty array if no arguments); 
+ - `channel` - Executed whenever a [service] executes a `channel`. Gets the request name as first argument, and an array of arguments as the second one (empty array if no arguments); 
+
+### Caching
+
+The [service] has a caching capability that is based only on configuration (though could be cleaned on demand).  
+
+```javascript
+SepCon.createService({
+  id: 'user'
+}, {
+  cache: {
+    requests: {
+      getUser: {
+        storage: false,
+      }
+    },
+    channels: {
+      user: {
+        storage: 'local',
+        duration: 15000
+      }
+    }
+  },
+  requests: {
+    getUser(resolve, reject, params) {
+      someAjaxCall('someUrl')
+        .then(response => {
+          resolve(response);
+          this.channels.user(response);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    }
+  },
+  channels: {
+    user(data) {
+      return data;
+    }
+  }
+});
+```
+This setup means that the `getUser` will be cached only on runtime - meaning only for the current page lifecycle (e.g. refreshing the page - clears the cache).
+So when triggered, assuming that without arguments, or with previously-used arguments, the `getUser` request, for the second time, the method of the [service] won't even run, instead the last value that was passed to the `onResolve` handler, will be the one that will be passed to the new `onResolve` handler again.
+
+For the `channels`, in oppose to `requests`, there is no external way of passing arguments to the method. In `channels` it's the [service] itself that will call it with any arguments at all. But again - the caching will rely on these arguments to determine whether to use the cache or actually run that `user` method.
+
+#### Clear Cache
+
+The only one who could clear a [service] cache is the service itself, and it would be by running the `clearCache` with the type of `requests` or `channels`, and the key. Optional parameter is sn array of arguments - if the cache clearance is meant for a specific result.
+
+```javascript
+SepCon.createService({
+  id: 'user'
+}, {
+  cache: {
+    requests: {
+      getUser: {
+        storage: false,
+      }
+    },
+    channels: {
+      user: {
+        storage: 'local',
+        duration: 15000
+      }
+    }
+  },
+  requests: {
+    getUser(resolve, reject, params) {
+      someAjaxCall('someUrl')
+        .then(response => {
+          resolve(response);
+          this.channels.user(response);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    }
+  },
+  channels: {
+    user(data) {
+      return data;
+    }
+  },
+  lifecycle: {
+    pre: {
+      request(name, args) {
+        if(name === 'getUser' && !this.isNotAnActualFlag) {
+          this.clearCache('requests', 'getUser');
+        }
+      }
+    }
+  }
+});
 ```
 
 <a name="provider"></a>
@@ -518,7 +659,7 @@ SepCon.createService({
   id: 'data-fetcher',
   provider: 'some-server'
 }, {
-  methods: {
+  requests: {
     getSomeInfo(resolve, reject, params) {
       this.provider.getData(params)
         .then(response => {
@@ -532,6 +673,7 @@ SepCon.createService({
 });
 
 SepCon.service('data-fetcher')
+  .requests
   .getSomeInfo({param1: 'abc'})
     .then((res) => {
       //do stuff with the returned data
@@ -542,59 +684,73 @@ SepCon.service('data-fetcher')
 * *This will send to the server via $.ajax an object called `params` that will have both `param1: 'abc'` and `url: 'my-cool-url`.*
 * *The response will first be handled at the [provider]'s `getData` method*, then it will go through the [service]'s `getSomeInfo` method, and then it will be returned to the Promise's `then` method from the initial executer (in this case it was directly from the window, but most probably will be handled via a [modifier].
 
+### Lifecycle
+
+ - `mount` - Executed once, upon creation
+
 <a name="lifecycle"></a>
 ## Lifecycles
 The goal behind the [lifecycles][lifecycle] can be splitted into three:
 1. Sync of two or more scopes and/or methods and thus creating a sequence.
 ```javascript
 state: {
-  mount() {} //executed 1st
+  lifecycle: {
+    mount() {} //executed 1st
+  }
 },
 view: {
-  render() {} //executed 2nd
+  lifecycle: {
+    render() {} //executed 2nd
+  }
 }
 ```
 2. Supply the ability to have hooks for before a given execution (`pre`) and after (`post`) it, systematically:
 ```javascript
-'pre:mount'() {}
-mount() {}
-'post:mount'() {}
+pre: {
+  mount() {}
+},
+on: {
+  mount() {}
+},
+post: {
+  mount() {}
+}
 ```
 3. Supply the ability to "break the chain" - if at some point we wouldn't want the [lifecycle] to continue, we could stop the sequence by returning a `false` value:
 ```javascript
 state: {
-  'pre:mount'() {} //executed 1st
-  mount() { return false; } //executed 3rd
+  lifecycle: {
+    pre: {
+      mount() {} //executed 1st
+    }
+    on: {
+      mount() { return false; } //executed 3rd
+    }
+  }
 },
 view: {
-  'pre:render'() {} //executed 2nd
-  render() {} //won't be executed
+  lifeyclce: {
+    pre: {
+      render() {} //executed 2nd
+    },
+    on: {
+      render() {} //won't be executed
+    }
+  }
 }
 ```
 
-
-### Default Lifecycles
-SepCon has a few predefined lifecycles.
-
-[**Component View**][component view]:
-* `render`
-  Executed with the [component state]'s `mount` and `change` lifecycles.
-  The value that will be returned should be a string that represents html.
-  The returned value will be inserted to the [component]'s representing DOM element
-
-[**Component State**][component state]:
-* `mount`
-  Executed once - when a new [component] is added to the DOM.
-* `resume`
-  Executed if the [component]'s representing DOM element was removed from the DOM at some point, and then got appended back again - meaning there's no need to mount it again, but we might want to hook code on the re-rendering of this [component].
-* `change`
-  Executed on every state property change, whether it's a local, external nor global property.
-  Will get 1 argument - [the ***changed*** object][the changed object]
-
-[**Modifier**][modifier], [**Provider**][provider], [**Service**][service]:
-* `mount`
-  Executed once - once defined.
-
+Shorthanding when setting the [lifecycle] hooks is possible - if you set the [lifecycle] methods straight into the `lifecycle` property - it will be treated as if you wrote them under `on`:
+```javascript
+SepCon.createModifier({id: 'some-modifier'}, {
+  lifecycle: {
+    mount() {}, //exactly the same
+    on: {
+      mount() {} //exactly the same  
+    }  
+  }  
+});
+```
 
 
 ### Changing The Lifecycles Configurations
@@ -653,8 +809,10 @@ SepCon uses a pretty simple, straight-forward [router], that is available for us
 They are the only privileged classes to use the SepCon's [router]. In their instances' scopes - you'll have a אני י עדי`router` property under the `this` context:
 ```javascript
 state:{
-  change() {
-    console.log(this.router);
+  lifecycle: {
+    change() {
+      console.log(this.router);
+    }
   }
 }
 ```
@@ -678,10 +836,7 @@ Once a route will match the RegExp supplied at the `match` property, the `handle
 ```javascript
 {
   state: {
-    //props: {},
-    //methods: {},
-    //mount() {},
-    //change(changed) {},
+    lifecycles: {}
     routes: []
   }
 }
@@ -689,8 +844,7 @@ Once a route will match the RegExp supplied at the `match` property, the `handle
 *In a [modifier] it will look something similar to this:*
 ```javascript
 {
-  //methods: {},
-  //mount() {},
+  lifecycles: {}
   routes: []
 }
 ```
