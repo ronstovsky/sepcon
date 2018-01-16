@@ -2868,6 +2868,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            _this.clearCache(_this.definition.cache[type][key], type, key, args);
 	        };
+	        this.scoped.getCache = function (type, key, args) {
+	            if (!_this.definition.cache[type] || !_this.definition.cache[type][key]) {
+	                return;
+	            }
+	            return _this.getCache(_this.definition.cache[type][key], type, key, args);
+	        };
 	
 	        this.api = {};
 	        this.api.requests = this.scoped.requests;
@@ -2903,6 +2909,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    _createClass(Service, [{
+	        key: 'getCache',
+	        value: function getCache(config, type, key) {
+	            var args = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+	
+	            return this.readCache(config, type, key, args);
+	        }
+	    }, {
 	        key: 'buildRequest',
 	        value: function buildRequest(name) {
 	            var _this2 = this;

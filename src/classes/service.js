@@ -45,6 +45,12 @@ export default class Service {
             }
             this.clearCache(this.definition.cache[type][key], type, key, args);
         };
+        this.scoped.getCache = (type, key, args) => {
+            if(!this.definition.cache[type] || !this.definition.cache[type][key]) {
+                return;
+            }
+            return this.getCache(this.definition.cache[type][key], type, key, args);
+        };
 
         this.api = {};
         this.api.requests = this.scoped.requests;
@@ -78,6 +84,10 @@ export default class Service {
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
         this.sequencer.startSequence('mountBase');
+    }
+
+    getCache(config, type, key, args = []) {
+        return this.readCache(config, type, key, args);
     }
 
     buildRequest(name) {

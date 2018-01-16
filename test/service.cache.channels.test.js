@@ -53,6 +53,7 @@ describe('Service Cache Channels', () => {
                     resolve(true);
                 },
                 clearCacheFor(resolve, reject, args) {
+                    this.getCache('channels', 'announcements');
                     this.clearCache('channels', 'announcements', args);
                     resolve(true);
                 }
