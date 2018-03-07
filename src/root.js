@@ -14,6 +14,7 @@ import { ComponentItem, ComponentDefinitionItem } from './classes/component.mapp
 import { ModifierItem } from './classes/modifier.mapping.js';
 
 import { DATA_CHANGED, ADD_COMPONENT } from './shared/constants';
+import ReferenceMap from './shared/reference.map.js';
 
 import sequencerConfig from './config/sequencer.config.js';
 import routerConfig from './config/router.config.js';
@@ -65,6 +66,9 @@ export default class Root {
 
         this.router.config(this.routerConfig);
         this.router.listen();
+
+        //for debugging purposes
+        this._getValueFromHash = ReferenceMap.get;
     }
 
     setConfiguration(config) {

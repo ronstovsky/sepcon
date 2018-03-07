@@ -1,4 +1,4 @@
-import { TAG_PREFIX, TAG_IDENTIFIER } from './constants';
+import {TAG_PREFIX, TAG_IDENTIFIER} from './constants';
 
 export default {
     /**
@@ -16,8 +16,7 @@ export default {
 
         to = to || new from.constructor();
 
-        for (let name in from)
-        {
+        for (let name in from) {
             to[name] = typeof to[name] == 'undefined' ? this.clone(from[name], null) : to[name];
         }
 
@@ -26,12 +25,12 @@ export default {
 
     extend(base, extend) {
         let res = this.clone(base);
-        if(!res) {
+        if (!res) {
             res = {};
         }
         for (let i in extend) {
             if (res.hasOwnProperty(i)) {
-                if(typeof extend[i] === 'object') {
+                if (typeof extend[i] === 'object') {
                     res[i] = this.extend(base[i], extend[i]);
                 }
                 else {
@@ -46,7 +45,7 @@ export default {
     },
 
     concatMethods(meth1, meth2) {
-        return function() {
+        return function () {
             meth1.apply(this, arguments);
             return meth2.apply(this, arguments);
         };
@@ -58,20 +57,20 @@ export default {
      * @param action
      * @returns {string}
      */
-    hookString(hook, action){
+    hookString(hook, action) {
         return (hook ? `${hook}:` : '') + action;
     },
 
     buildUid() {
-        return parseInt(Date.now()*1000+Math.round(Math.random()*1000)).toString(36);
+        return parseInt(Date.now() * 1000 + Math.round(Math.random() * 1000)).toString(36);
     },
 
     formatValueForValidJSON(obj) {
-        if(obj === 0) return 0;
-        if(obj === undefined) return null;
-        if(typeof obj === 'object') {
-            if(obj instanceof Array) {
-                for(let i = 0, e = obj.length; i < e; i++) {
+        if (obj === 0) return 0;
+        if (obj === undefined) return null;
+        if (typeof obj === 'object') {
+            if (obj instanceof Array) {
+                for (let i = 0, e = obj.length; i < e; i++) {
                     obj[i] = this.formatValueForValidJSON(obj[i]);
                 }
             }
@@ -86,13 +85,13 @@ export default {
 
     //Component Functions
     isInDOM(element) {
-        if(!element) return false;
+        if (!element) return false;
         return document.body.contains(element);
     },
     isDeepNestedInSameComponent(element) {
         const path = this.getComponentElementsPath(element, true, true);
-        for(let i=0, e=path.length-1; i< e; i++) {
-            if(path[i] === element.tagName) return true;
+        for (let i = 0, e = path.length - 1; i < e; i++) {
+            if (path[i] === element.tagName) return true;
         }
         return false;
     },
@@ -101,18 +100,18 @@ export default {
         let parent;
         do {
             parent = child.parentNode;
-            if(!parent) break;
-            if(parent._componentElement || parent.tagName.toLowerCase().indexOf(TAG_PREFIX) === 0) {
+            if (!parent) break;
+            if (parent._componentElement || parent.tagName.toLowerCase().indexOf(TAG_PREFIX) === 0) {
                 return parent;
             }
             child = parent;
         }
-        while(parent.tagName.toLowerCase() != 'body');
+        while (parent.tagName.toLowerCase() != 'body');
         return false;
     },
     getComponentElementNameForPath(element) {
         let id = element.getAttribute(TAG_IDENTIFIER) || null;
-        if(!id) {
+        if (!id) {
             const siblings = this.getComponentElementSiblings(element);
             const siblingsIndex = this.getComponentElementIndex(element, siblings);
             id = '(' + siblingsIndex + ')';
@@ -126,30 +125,30 @@ export default {
         let path = [];
         do {
             parent = this.getParentComponentElement(child);
-            if(!typesOnly && parent.tagName) {
-                 path.push(this.getComponentElementNameForPath(parent));
+            if (!typesOnly && parent.tagName) {
+                path.push(this.getComponentElementNameForPath(parent));
             }
-            else if(parent.tagName) {
+            else if (parent.tagName) {
                 path.push(parent.tagName);
             }
             child = parent;
         }
-        while(parent);
+        while (parent);
         path.reverse();
-        if(!typesOnly) {
+        if (!typesOnly) {
             path.push(this.getComponentElementNameForPath(element));
         }
         else {
             path.push(element.tagName);
         }
-        if(asArray) return path;
+        if (asArray) return path;
         return path.join('>');
     },
     getComponentElementSiblings(element) {
         const parent = this.getParentComponentElement(element);
         let siblings = parent ? Array.from(parent.getElementsByTagName(element.tagName)) : [];
-        if(siblings.length > 1) {
-            siblings = siblings.filter((node)=> {
+        if (siblings.length > 1) {
+            siblings = siblings.filter((node) => {
                 if (node._componentElement && node._componentElement.parent === parent) return true;
                 return this.getParentComponentElement(node) === parent;
             });
@@ -157,20 +156,20 @@ export default {
         return siblings;
     },
     getComponentElementIndex(element, siblings) {
-        for(let i=0,e=siblings.length;i<e;i++){
-            if(siblings[i]===element) return i;
+        for (let i = 0, e = siblings.length; i < e; i++) {
+            if (siblings[i] === element) return i;
         }
         return 0;
     },
 
     getComponent(list, element) {
-        if(element.component && element.component.mapItem) return element.component.mapItem;
+        if (element.component && element.component.mapItem) return element.component.mapItem;
 
         const path = element._componentElement.path;
 
-        for(let i=0, e=list.length; i<e; i++) {
+        for (let i = 0, e = list.length; i < e; i++) {
             let _item = list[i];
-            if(_item &&
+            if (_item &&
                 (_item.element === element || _item.path === path)) {
                 element.component = _item.element.component;
                 _item.setElement(element);
@@ -182,27 +181,26 @@ export default {
     getLooseComponent(list, element) {
         const tagName = element.tagName;
         const id = element.getAttribute(TAG_IDENTIFIER);
-        let sameTagList = list.filter((_item)=>_item && _item.tag === tagName);
+        let sameTagList = list.filter((_item) => _item && _item.tag === tagName);
         let item = null;
-        sameTagList.forEach((_item)=>{
-            if(!item) {
+        if (id && tagName) {
+            for (let i = 0, e = sameTagList.length; i < e; i++) {
+                let _item = sameTagList[i];
                 const isSameIdentifier = _item.id === id;
                 const isSameTag = _item.tag === tagName;
                 if (isSameTag && isSameIdentifier) {
-                    item = _item;
+                    element.component = _item.element.component;
+                    _item.setElement(element);
+                    return _item;
                 }
             }
-        });
-
-        if(!id) {
-            item = this.getComponent(sameTagList, element);
         }
-        return item;
+        return this.getComponent(sameTagList, element);
     },
     getCookie(key) {
         return document.cookie.split(';').forEach(cookie => {
             const cookiePair = cookie.split('=');
-            if(cookiePair[0] === key) {
+            if (cookiePair[0] === key) {
                 return cookiePair[1];
             }
         });

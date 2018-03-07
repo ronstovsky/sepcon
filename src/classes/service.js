@@ -27,6 +27,8 @@ export default class Service {
             channels: {}
         };
 
+        this.formatCacheDefinitions('requests');
+        this.formatCacheDefinitions('channels');
 
         Object.keys(this.definition.requests).forEach(key => {
             this.scoped.requests[key] = this.buildRequest.bind(this, key);
@@ -40,10 +42,19 @@ export default class Service {
         });
 
         this.scoped.clearCache = (type, key, args) => {
-            if(!this.definition.cache[type] || !this.definition.cache[type][key]) {
+            if(!type) {
+                this.clearAllCacheOf('requests');
+                this.clearAllCacheOf('channels');
+            }
+            else if(!key) {
+                this.clearAllCacheOf(type);
+            }
+            else if(!this.definition.cache[type] || !this.definition.cache[type][key]) {
                 return;
             }
-            this.clearCache(this.definition.cache[type][key], type, key, args);
+            else {
+                this.clearCache(this.definition.cache[type][key], type, key, args);
+            }
         };
         this.scoped.getCache = (type, key, args) => {
             if(!this.definition.cache[type] || !this.definition.cache[type][key]) {
@@ -84,6 +95,20 @@ export default class Service {
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
         this.sequencer.startSequence('mountBase');
+    }
+
+    formatCacheDefinitions(type) {
+        Object.keys(this.definition.cache[type]).forEach(key => {
+            if(this.definition.cache[type][key] === true) {
+                this.definition.cache[type][key] = {};
+            }
+        });
+    }
+
+    clearAllCacheOf(type) {
+        Object.keys(this.definition.cache[type]).forEach(key => {
+            this.clearCache(this.definition.cache[type][key], type, key);
+        });
     }
 
     getCache(config, type, key, args = []) {

@@ -153,6 +153,11 @@ describe('Component Performance', ()=> {
         document.getElementById('ui-tests').appendChild(DIV);
     }).timeout(5000);
 
+    it('update all 1000 rows with global change', (done) => {
+        doneCaller.setDoneCb(done);
+        scope.modifier('globals').updateNumber();
+    }).timeout(5000);
+
     it('render 1000 rows in container', (done) => {
         let rowsHtml = rows.createTag()
             .methods({
@@ -169,5 +174,26 @@ describe('Component Performance', ()=> {
     it('update all 2000 rows with global change', (done) => {
         doneCaller.setDoneCb(done);
         scope.modifier('globals').updateNumber();
+    }).timeout(5000);
+
+
+    it('render 10000(!) rows', (done) => {
+        const max = 10000;
+        let rows = [];
+        for (let i = 0; i < max; i++) {
+            const current = row.createTag();
+            current.id(i);
+            if (i === max - 1) {
+                current
+                    .methods({
+                        changeCb: doneCaller.callDone,
+                        firstRenderCb: done
+                    });
+            }
+            rows.push(current.render());
+        }
+        let DIV = document.createElement('div');
+        DIV.innerHTML = rows.join('');
+        document.getElementById('ui-tests').appendChild(DIV);
     }).timeout(5000);
 });
