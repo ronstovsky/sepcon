@@ -88,7 +88,6 @@ describe('Service Cache Requests', () => {
         });
     });
 
-
     it('should be able to cache to localStorage and continue from there on', (done) => {
         let counter = 0;
         scope.createService({
@@ -130,17 +129,24 @@ describe('Service Cache Requests', () => {
                     })();
                     resolve(num + '' + char);
                 }
+            },
+            lifecycle: {
+                mount() {
+                    this.clearCache();
+                }
             }
         });
 
-        const record = localStorage.getItem(scope.hash + ':testService2|request|clickMe[]');
-        if (record) {
-            console.log('had localStorage cache');
+
+        const runWithCache = () => {
+            const storageKey = scope.hash + ':testService' + testNum + '|requests|clickMe';
+
             scope.service('testService' + testNum).requests.clickMe().then((res) => {
                 expect(res).to.be.a('string');
                 expect(res).to.be.equal('miaubchfff');
                 expect(counter).to.be.equal(0);
-                localStorage.clear();
+
+                localStorage.removeItem(storageKey);
 
                 scope.service('testService' + testNum).requests.clickMe().then((res) => {
                     expect(res).to.be.a('string');
@@ -174,43 +180,44 @@ describe('Service Cache Requests', () => {
                     });
                 });
             });
-        }
-        else {
+        };
+
+        scope.service('testService' + testNum).requests.clickMe().then((res) => {
+            expect(res).to.be.a('string');
+            expect(res).to.be.equal('miaubchfff');
+            expect(counter).to.be.equal(1);
+
             scope.service('testService' + testNum).requests.clickMe().then((res) => {
-                expect(res).to.be.a('string');
                 expect(res).to.be.equal('miaubchfff');
                 expect(counter).to.be.equal(1);
 
-                scope.service('testService' + testNum).requests.clickMe().then((res) => {
-                    expect(res).to.be.equal('miaubchfff');
-                    expect(counter).to.be.equal(1);
+                scope.service('testService' + testNum).requests.clickMe(1, 'a').then((res) => {
+                    expect(res).to.be.equal('10z');
+                    expect(counter).to.be.equal(2);
 
-                    scope.service('testService' + testNum).requests.clickMe(1, 'a').then((res) => {
-                        expect(res).to.be.equal('10z');
+                    scope.service('testService' + testNum).requests.clickMe().then((res) => {
+                        expect(res).to.be.equal('miaubchfff');
                         expect(counter).to.be.equal(2);
 
-                        scope.service('testService' + testNum).requests.clickMe().then((res) => {
-                            expect(res).to.be.equal('miaubchfff');
+                        scope.service('testService' + testNum).requests.clickMe(1, 'a').then((res) => {
+                            expect(res).to.be.equal('10z');
                             expect(counter).to.be.equal(2);
 
-                            scope.service('testService' + testNum).requests.clickMe(1, 'a').then((res) => {
-                                expect(res).to.be.equal('10z');
-                                expect(counter).to.be.equal(2);
+                            scope.service('testService' + testNum).requests.clickMe(5, 'c').then((res) => {
+                                expect(res).to.be.equal('29348745A');
+                                expect(counter).to.be.equal(3);
 
-                                scope.service('testService' + testNum).requests.clickMe(5, 'c').then((res) => {
-                                    expect(res).to.be.equal('29348745A');
-                                    expect(counter).to.be.equal(3);
-                                    done();
-                                });
+                                counter = 0;
+                                runWithCache();
                             });
                         });
                     });
                 });
             });
-        }
+        });
     });
 
-    it('should be able to cache to localStorage and continue from there on', (done) => {
+    it('should retain cache only for the duration defined', (done) => {
         let counter = 0;
         scope.createService({
             id: 'testService' + testNum,
@@ -228,10 +235,15 @@ describe('Service Cache Requests', () => {
                     counter++;
                     resolve(number * 2);
                 }
+            },
+            lifecycle: {
+                mount() {
+                    this.clearCache();
+                }
             }
         });
 
-        localStorage.clear();
+        // localStorage.clear();
         scope.service('testService' + testNum).requests.clickMe(5).then(res => {
             expect(res).to.equal(10);
             expect(counter).to.equal(1);
