@@ -1,3 +1,4 @@
+import common from './utils.common';
 let references = new Map();
 let keys = {};
 
@@ -7,7 +8,7 @@ const ReferenceMap = {
             return references.get(val);
         }
         else {
-            const key = parseInt(Date.now()*1000+Math.round(Math.random()*1000)).toString(36);
+            const key = common.buildUid();
             references.set(val, key);
             keys[key] = val;
             return key;

@@ -1,4 +1,5 @@
 import {TAG_PREFIX, TAG_IDENTIFIER} from './constants';
+let internalCounterForUids = 0;
 
 export default {
     /**
@@ -51,18 +52,8 @@ export default {
         };
     },
 
-    /**
-     * creates method names for lifecycles ("hook":"action" or "action" if not pre/post)
-     * @param hook
-     * @param action
-     * @returns {string}
-     */
-    hookString(hook, action) {
-        return (hook ? `${hook}:` : '') + action;
-    },
-
     buildUid() {
-        return parseInt(Date.now() * 1000 + Math.round(Math.random() * 1000)).toString(36);
+        return parseInt((Date.now() + internalCounterForUids++) * 1000 + Math.round(Math.random() * 1000)).toString(36);
     },
 
     formatValueForValidJSON(obj) {
@@ -182,7 +173,6 @@ export default {
         const tagName = element.tagName;
         const id = element.getAttribute(TAG_IDENTIFIER);
         let sameTagList = list.filter((_item) => _item && _item.tag === tagName);
-        let item = null;
         if (id && tagName) {
             for (let i = 0, e = sameTagList.length; i < e; i++) {
                 let _item = sameTagList[i];

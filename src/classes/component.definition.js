@@ -166,9 +166,8 @@ export default class ComponentDefinition {
                             let parentComponent = false;
                             if(!this.component && parent) {
                                 parentComponent = common.getComponent(root.componentElements, parent);
-                                let thisComponent = parentComponent ? common.getLooseComponent(parentComponent.children, this) : false;
-                                if(thisComponent) {
-                                    this.component = thisComponent.component;
+                                if(parentComponent) {
+                                    common.getLooseComponent(parentComponent.children, this);
                                 }
                             }
 
