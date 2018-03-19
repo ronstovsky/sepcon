@@ -98,6 +98,10 @@ export default {
         sequence: [
             {
                 target: 'state',
+                action: 'attach'
+            },
+            {
+                target: 'state',
                 action: 'change'
             },
             {

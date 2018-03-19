@@ -279,6 +279,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _constants = __webpack_require__(2);
 	
+	var internalCounterForUids = 0;
+	
 	exports.default = {
 	    /**
 	     * get a deep cloned + extended (if 'to' argument is set) object
@@ -323,19 +325,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return meth2.apply(this, arguments);
 	        };
 	    },
-	
-	
-	    /**
-	     * creates method names for lifecycles ("hook":"action" or "action" if not pre/post)
-	     * @param hook
-	     * @param action
-	     * @returns {string}
-	     */
-	    hookString: function hookString(hook, action) {
-	        return (hook ? hook + ':' : '') + action;
-	    },
 	    buildUid: function buildUid() {
-	        return parseInt(Date.now() * 1000 + Math.round(Math.random() * 1000)).toString(36);
+	        return parseInt((Date.now() + internalCounterForUids++) * 1000 + Math.round(Math.random() * 1000)).toString(36);
 	    },
 	    formatValueForValidJSON: function formatValueForValidJSON(obj) {
 	        if (obj === 0) return 0;
@@ -451,21 +442,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var sameTagList = list.filter(function (_item) {
 	            return _item && _item.tag === tagName;
 	        });
-	        var item = null;
-	        sameTagList.forEach(function (_item) {
-	            if (!item) {
+	        if (id && tagName) {
+	            for (var i = 0, e = sameTagList.length; i < e; i++) {
+	                var _item = sameTagList[i];
 	                var isSameIdentifier = _item.id === id;
 	                var isSameTag = _item.tag === tagName;
 	                if (isSameTag && isSameIdentifier) {
-	                    item = _item;
+	                    element.component = _item.element.component;
+	                    _item.setElement(element);
+	                    return _item;
 	                }
 	            }
-	        });
-	
-	        if (!id) {
-	            item = this.getComponent(sameTagList, element);
 	        }
-	        return item;
+	        return this.getComponent(sameTagList, element);
 	    },
 	    getCookie: function getCookie(key) {
 	        return document.cookie.split(';').forEach(function (cookie) {
@@ -503,6 +492,46 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _utils = __webpack_require__(1);
+	
+	var _utils2 = _interopRequireDefault(_utils);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var references = new Map();
+	var keys = {};
+	
+	var ReferenceMap = {
+	    add: function add(val) {
+	        if (references.has(val)) {
+	            return references.get(val);
+	        } else {
+	            var key = _utils2.default.buildUid();
+	            references.set(val, key);
+	            keys[key] = val;
+	            return key;
+	        }
+	    },
+	    get: function get(key) {
+	        if (keys[key] !== undefined) {
+	            return keys[key];
+	        }
+	        return null;
+	    }
+	};
+	
+	exports.default = ReferenceMap;
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -575,7 +604,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -664,7 +693,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Logs;
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -785,39 +814,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 	
 	exports.default = _class;
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-	"use strict";
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	var references = new Map();
-	var keys = {};
-	
-	var ReferenceMap = {
-	    add: function add(val) {
-	        if (references.has(val)) {
-	            return references.get(val);
-	        } else {
-	            var key = parseInt(Date.now() * 1000 + Math.round(Math.random() * 1000)).toString(36);
-	            references.set(val, key);
-	            keys[key] = val;
-	            return key;
-	        }
-	    },
-	    get: function get(key) {
-	        if (keys[key] !== undefined) {
-	            return keys[key];
-	        }
-	        return null;
-	    }
-	};
-	
-	exports.default = ReferenceMap;
 
 /***/ }),
 /* 7 */
@@ -1075,9 +1071,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                    var parentComponent = false;
 	                                    if (!_this3.component && parent) {
 	                                        parentComponent = _utils2.default.getComponent(root.componentElements, parent);
-	                                        var thisComponent = parentComponent ? _utils2.default.getLooseComponent(parentComponent.children, _this3) : false;
-	                                        if (thisComponent) {
-	                                            _this3.component = thisComponent.component;
+	                                        if (parentComponent) {
+	                                            _utils2.default.getLooseComponent(parentComponent.children, _this3);
 	                                        }
 	                                    }
 	
@@ -1143,11 +1138,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _utils2 = _interopRequireDefault(_utils);
 	
-	var _utils3 = __webpack_require__(3);
+	var _utils3 = __webpack_require__(4);
 	
 	var _utils4 = _interopRequireDefault(_utils3);
 	
-	var _logs = __webpack_require__(4);
+	var _logs = __webpack_require__(5);
 	
 	var _logs2 = _interopRequireDefault(_logs);
 	
@@ -1552,15 +1547,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _utils2 = _interopRequireDefault(_utils);
 	
-	var _utils3 = __webpack_require__(3);
+	var _utils3 = __webpack_require__(4);
 	
 	var _utils4 = _interopRequireDefault(_utils3);
 	
-	var _sequencer = __webpack_require__(5);
+	var _sequencer = __webpack_require__(6);
 	
 	var _sequencer2 = _interopRequireDefault(_sequencer);
 	
-	var _referenceMap = __webpack_require__(6);
+	var _referenceMap = __webpack_require__(3);
 	
 	var _referenceMap2 = _interopRequireDefault(_referenceMap);
 	
@@ -2179,7 +2174,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _referenceMap = __webpack_require__(6);
+	var _referenceMap = __webpack_require__(3);
 	
 	var _referenceMap2 = _interopRequireDefault(_referenceMap);
 	
@@ -2319,7 +2314,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _utils2 = _interopRequireDefault(_utils);
 	
-	var _utils3 = __webpack_require__(3);
+	var _utils3 = __webpack_require__(4);
 	
 	var _utils4 = _interopRequireDefault(_utils3);
 	
@@ -2851,6 +2846,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            channels: {}
 	        };
 	
+	        this.formatCacheDefinitions('requests');
+	        this.formatCacheDefinitions('channels');
+	
 	        Object.keys(this.definition.requests).forEach(function (key) {
 	            _this.scoped.requests[key] = _this.buildRequest.bind(_this, key);
 	            _this.promises[key] = {};
@@ -2863,10 +2861,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	
 	        this.scoped.clearCache = function (type, key, args) {
-	            if (!_this.definition.cache[type] || !_this.definition.cache[type][key]) {
+	            if (!type) {
+	                _this.clearAllCacheOf('requests');
+	                _this.clearAllCacheOf('channels');
+	            } else if (!key) {
+	                _this.clearAllCacheOf(type);
+	            } else if (!_this.definition.cache[type] || !_this.definition.cache[type][key]) {
 	                return;
+	            } else {
+	                _this.clearCache(_this.definition.cache[type][key], type, key, args);
 	            }
-	            _this.clearCache(_this.definition.cache[type][key], type, key, args);
 	        };
 	        this.scoped.getCache = function (type, key, args) {
 	            if (!_this.definition.cache[type] || !_this.definition.cache[type][key]) {
@@ -2909,6 +2913,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    _createClass(Service, [{
+	        key: 'formatCacheDefinitions',
+	        value: function formatCacheDefinitions(type) {
+	            var _this2 = this;
+	
+	            Object.keys(this.definition.cache[type]).forEach(function (key) {
+	                if (_this2.definition.cache[type][key] === true) {
+	                    _this2.definition.cache[type][key] = {};
+	                }
+	            });
+	        }
+	    }, {
+	        key: 'clearAllCacheOf',
+	        value: function clearAllCacheOf(type) {
+	            var _this3 = this;
+	
+	            Object.keys(this.definition.cache[type]).forEach(function (key) {
+	                _this3.clearCache(_this3.definition.cache[type][key], type, key);
+	            });
+	        }
+	    }, {
 	        key: 'getCache',
 	        value: function getCache(config, type, key) {
 	            var args = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
@@ -2918,12 +2942,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'buildRequest',
 	        value: function buildRequest(name) {
-	            var _this2 = this;
+	            var _this4 = this;
 	
 	            var args = [].slice.call(arguments).slice(1);
 	            var promise = this.promises[name][this.getArgumentsAsIndex(args)] = new Promise(function (resolve, reject) {
 	                var _args = [resolve, reject].concat(args);
-	                _this2.sequencer.startSequence('serviceRequest', [name, args, _args]);
+	                _this4.sequencer.startSequence('serviceRequest', [name, args, _args]);
 	            });
 	            return promise;
 	        }
@@ -3180,11 +3204,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'addRoutes',
 	        value: function addRoutes() {
-	            var _this3 = this;
+	            var _this5 = this;
 	
 	            if (this.definition.routes) {
 	                this.definition.routes.forEach(function (i) {
-	                    return _this3.root.router.add(i, _this3.scoped);
+	                    return _this5.root.router.add(i, _this5.scoped);
 	                });
 	            }
 	        }
@@ -3304,6 +3328,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 	        sequence: [{
+	            target: 'state',
+	            action: 'attach'
+	        }, {
 	            target: 'state',
 	            action: 'change'
 	        }, {
@@ -3468,7 +3495,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _componentTag2 = _interopRequireDefault(_componentTag);
 	
-	var _sequencer = __webpack_require__(5);
+	var _sequencer = __webpack_require__(6);
 	
 	var _sequencer2 = _interopRequireDefault(_sequencer);
 	
@@ -3476,7 +3503,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _router2 = _interopRequireDefault(_router);
 	
-	var _logs = __webpack_require__(4);
+	var _logs = __webpack_require__(5);
 	
 	var _logs2 = _interopRequireDefault(_logs);
 	
@@ -3489,6 +3516,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _modifierMapping = __webpack_require__(15);
 	
 	var _constants = __webpack_require__(2);
+	
+	var _referenceMap = __webpack_require__(3);
+	
+	var _referenceMap2 = _interopRequireDefault(_referenceMap);
 	
 	var _sequencerConfig = __webpack_require__(20);
 	
@@ -3550,6 +3581,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.router.config(this.routerConfig);
 	        this.router.listen();
+	
+	        //for debugging purposes
+	        this._getValueFromHash = _referenceMap2.default.get;
 	    }
 	
 	    _createClass(Root, [{
