@@ -8,7 +8,7 @@ export default class Component {
 
     constructor(componentDefinition, root, element, parent, parentElement) {
         this.root = root;
-        this.active = false;
+        this.isActive = false;
 
         this._eventsCallbacks = {};
         this.scoped = common.clone(componentDefinition.view || {});
@@ -102,16 +102,20 @@ export default class Component {
 
     initialize(element) {
         // execute state mount and sync with render sequence
-        this.active = true;
+        this.isActive = true;
         this.setStateData();
         this.sequencer.startSequence('mount');
     }
 
     //after change, the element is re-attached to the DOM so have to attach it
     resume(element) {
-        this.active = true;
         this.unbindEvents();
         this.scoped.element = element;
+        if(this.isDestroying) {
+            this.holdResumeInQueue = true;
+            return;
+        }
+        this.isActive = true;
         if (!this.currentHtml) {
             this.initialize();
             return;
@@ -136,6 +140,12 @@ export default class Component {
             });
         }
     }
+    checkForResume() {
+        if(this.holdResumeInQueue) {
+            this.resume(this.scoped.element);
+            this.holdResumeInQueue = false;
+        }
+    }
 
     updateState() {
         this.scoped.props = this.state.getProps();
@@ -156,10 +166,12 @@ export default class Component {
     }
 
     onReferenceChange(changed) {
-        const localChanged = this.state.getReferenceStatePropNames(changed);
-        this.sequencer.startSequence('referenceChange', [localChanged]).then(() => {
-            this.preventEmptyHtml();
-        });
+        if(this.isActive) {
+            const localChanged = this.state.getReferenceStatePropNames(changed);
+            this.sequencer.startSequence('referenceChange', [localChanged]).then(() => {
+                this.preventEmptyHtml();
+            });
+        }
     }
 
     onGlobalStateChange(data, changed) {
@@ -209,10 +221,14 @@ export default class Component {
     }
 
     onDestroy() {
-        this.active = false;
+        this.isActive = false;
+        this.isDestroying = true;
         this.state.removeRoutes();
         this.unbindEvents();
-        this.componentPrevProps = common.clone(this.scoped.props);
-        this.sequencer.startSequence('destroy');
+        this.sequencer.startSequence('destroy').then(() => {
+            this.isDestroying = false;
+            this.componentPrevProps = common.clone(this.scoped.props);
+            this.checkForResume();
+        });
     }
 }

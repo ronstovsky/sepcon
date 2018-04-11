@@ -46,9 +46,16 @@ export default class ComponentTag {
     }
     refProps(properties) {
         let formedProperties = {};
-        for(let key in properties) {
-            const prop = properties[key];
-            formedProperties[key] = { reference: prop };
+        if(properties.length && Object.keys(properties).length === properties.length && properties.forEach) {
+            properties.forEach(prop => {
+                formedProperties[prop] = {reference: prop};
+            });
+        }
+        else {
+            for (let key in properties) {
+                const prop = properties[key];
+                formedProperties[key] = {reference: prop};
+            }
         }
         Object.assign(this._props, formedProperties);
         return this;
