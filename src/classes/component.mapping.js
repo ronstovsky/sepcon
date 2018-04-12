@@ -1,5 +1,6 @@
 import { TAG_IDENTIFIER, TAG_PROPERTIES, TAG_METHODS } from './../shared/constants';
 import mappingChanges from './../shared/utils.mapping.changes';
+import common from './../shared/utils.common';
 
 class ComponentItem {
     constructor(component, element) {
@@ -56,7 +57,13 @@ class ComponentItem {
             this.changed = true;
         }
         else if(Object.keys(this.refGlobal).length > 0 || Object.keys(this.selfGlobal).length > 0) {
-            const globalsToCheck = Object.assign({}, this.selfGlobal, this.refGlobal);
+            let globalsToCheck = common.clone(this.selfGlobal);
+            Object.keys(this.refGlobal).forEach(data => {
+                if(!globalsToCheck[data]) {
+                    globalsToCheck[data] = [];
+                }
+                globalsToCheck[data] = globalsToCheck[data].concat(this.refGlobal[data]);
+            });
             this.changed =  mappingChanges.isGlobalChanged(globalsToCheck, data, changed);
         }
         return this.changed;
