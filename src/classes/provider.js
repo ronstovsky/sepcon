@@ -13,6 +13,7 @@ export default class Provider {
 
         this.services = {};
 
+        this.scoped.services = {};
         this.scoped.router = this.root.router;
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);

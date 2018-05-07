@@ -8,7 +8,7 @@ export default class Component {
 
     constructor(componentDefinition, root, element, parent, parentElement) {
         this.root = root;
-        this.active = false;
+        this.isActive = false;
 
         this._eventsCallbacks = {};
         this.scoped = common.clone(componentDefinition.view || {});
@@ -43,16 +43,15 @@ export default class Component {
 
         this.scoped.events.forEach((evObj)=> {
             //getting the target - selector or the whole element
-            const _target = evObj.selector ? this.scoped.element.querySelectorAll(evObj.selector) : this.scoped.element;
-            if(!this.validateEvents(_target, evObj, true)) {
-                return;
-            }
+            const _target = evObj.selector ? [].slice.call(this.scoped.element.querySelectorAll(evObj.selector)) : [this.scoped.element];
             //storing callbacks in a map to keep reference for later unbinding on demand
-            this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback] = this.scoped[evObj.callback].bind(this.scoped);
+            this._eventsCallbacks[(evObj.selector || '') + ':' + evObj.event + ':' + evObj.callback] = this.scoped[evObj.callback].bind(this.scoped);
             for(let i in _target) {
                 let trg = _target[i];
-                if(typeof trg === 'object' && trg !== null) {
-                    trg.addEventListener(evObj.event, this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
+                if(!this.validateEvents(trg, evObj, true)) {
+                    if (typeof trg === 'object' && trg !== null) {
+                        trg.addEventListener(evObj.event, this._eventsCallbacks[(evObj.selector || '') + ':' + evObj.event + ':' + evObj.callback], false);
+                    }
                 }
             }
         });
@@ -63,17 +62,19 @@ export default class Component {
 
         this.scoped.events.forEach((evObj)=> {
             //getting the target - selector or the whole element
-            const _target = evObj.selector ? this.scoped.element.querySelector(evObj.selector) : this.scoped.element;
-            if(!this.validateEvents(_target, evObj)) {
-                return;
+            const _target = evObj.selector ? [].slice.call(this.scoped.element.querySelectorAll(evObj.selector)) : [this.scoped.element];
+            for(let i in _target) {
+                let trg = _target[i];
+                if(this.validateEvents(trg, evObj)) {
+                    trg.removeEventListener(evObj.event, this._eventsCallbacks[(evObj.selector || '') + ':' + evObj.event + ':' + evObj.callback], false);
+                }
             }
             //using the eventsCallback map for live reference for removing it on demand
-            _target.removeEventListener(evObj.event, this._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
         });
         this.scoped.isInitiatedEvents = false;
     }
     validateEvents(el, ev, bind) {
-        if(!el) {
+        if(!el && typeof el !== 'object' && !el instanceof Element) {
             this.root.logs.print({
                 title: { content: `Could Not Find An Element For ${bind ? 'Binding' : 'Unbinding'} An Event ${bind ? 'To' : 'From'}` },
                 rows: [
@@ -102,16 +103,20 @@ export default class Component {
 
     initialize(element) {
         // execute state mount and sync with render sequence
-        this.active = true;
+        this.isActive = true;
         this.setStateData();
         this.sequencer.startSequence('mount');
     }
 
     //after change, the element is re-attached to the DOM so have to attach it
     resume(element) {
-        this.active = true;
         this.unbindEvents();
         this.scoped.element = element;
+        if(this.isDestroying) {
+            this.holdResumeInQueue = true;
+            return;
+        }
+        this.isActive = true;
         if (!this.currentHtml) {
             this.initialize();
             return;
@@ -136,6 +141,12 @@ export default class Component {
             });
         }
     }
+    checkForResume() {
+        if(this.holdResumeInQueue) {
+            this.resume(this.scoped.element);
+            this.holdResumeInQueue = false;
+        }
+    }
 
     updateState() {
         this.scoped.props = this.state.getProps();
@@ -156,10 +167,12 @@ export default class Component {
     }
 
     onReferenceChange(changed) {
-        const localChanged = this.state.getReferenceStatePropNames(changed);
-        this.sequencer.startSequence('referenceChange', [localChanged]).then(() => {
-            this.preventEmptyHtml();
-        });
+        if(this.isActive) {
+            const localChanged = this.state.getReferenceStatePropNames(changed);
+            this.sequencer.startSequence('referenceChange', [localChanged]).then(() => {
+                this.preventEmptyHtml();
+            });
+        }
     }
 
     onGlobalStateChange(data, changed) {
@@ -209,10 +222,14 @@ export default class Component {
     }
 
     onDestroy() {
-        this.active = false;
+        this.isActive = false;
+        this.isDestroying = true;
         this.state.removeRoutes();
         this.unbindEvents();
-        this.componentPrevProps = common.clone(this.scoped.props);
-        this.sequencer.startSequence('destroy');
+        this.sequencer.startSequence('destroy').then(() => {
+            this.isDestroying = false;
+            this.componentPrevProps = common.clone(this.scoped.props);
+            this.checkForResume();
+        });
     }
 }

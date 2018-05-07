@@ -160,6 +160,7 @@ export default class ComponentState {
         this.buildGlobalMethods();
 
         this.scoped.setProps = (props, silent) => {
+            props = common.clone(props);
             const originalProps = common.clone(this.scoped.props.local);
             const changedProps = changes.setChanges(this.scoped.props.local, props, silent, true);
 
@@ -440,16 +441,16 @@ export default class ComponentState {
         }
 
         if (passedExternalReference.parent.reference.global.hasOwnProperty(stateKey)) {
-            externalReferences.global[key] = passedExternalReference.parent.reference.global[stateKey];
+            externalReferences.global[key] = common.clone(passedExternalReference.parent.reference.global[stateKey]);
             if(path) {
                 externalReferences.global[key].key += '.' + path;
             }
         }
         else if (passedExternalReference.parent.reference.external.hasOwnProperty(stateKey)) {
-            externalReferences.external[key] = passedExternalReference.parent.reference.external[item.value];
+            externalReferences.external[key] = common.clone(passedExternalReference.parent.reference.external[item.value]);
         }
         else if (passedExternalReference.parent.reference.local.hasOwnProperty(stateKey)) {
-            externalReferences.local[key] = passedExternalReference.parent.reference.local[item.value];
+            externalReferences.local[key] = common.clone(passedExternalReference.parent.reference.local[item.value]);
             const bindToRelevantAncestor = (node, prop) => {
                 if (!node) {
                     return null;

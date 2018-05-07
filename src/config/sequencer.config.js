@@ -144,6 +144,7 @@ export default {
             if (step.target === 'state') {
                 if (hook === false) {
                     this.base.state.updateReferencedProps();
+                    this.base.updateState();
                 }
             }
             else {

@@ -81,7 +81,7 @@ export default class Service {
                 Promise.resolve().then(() => {
                     const lastMessageFromChannel = this.channelsLastCache[key];
                     if (lastMessageFromChannel && channel.callback && typeof channel.callback === 'function') {
-                        channel.callback(lastMessageFromChannel);
+                        channel.callback.apply(null, lastMessageFromChannel);
                     }
                 });
             };
@@ -90,7 +90,9 @@ export default class Service {
         this.scoped.router = this.root.router;
 
         if (meta.provider) {
-            this.scoped.provider = this.root.providers[meta.provider].scoped;
+            const provider = this.root.providers[meta.provider];
+            this.scoped.provider = provider.scoped;
+            this.scoped.provider[meta.id] = this.scoped;
         }
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
@@ -168,11 +170,11 @@ export default class Service {
         let value = this.getChannelCache(key, args); //need to slice resolve and reject arguments
         const subscribers = this.getValidSubscribers(key);
         if (value === undefined) {
-            value = this.definition.channels[key].apply(this.scoped, args);
+            value = [].concat(this.definition.channels[key].apply(this.scoped, args));
             this.setChannelCache(key, args, value);
         }
         subscribers.forEach(sub => {
-            sub.callback(value);
+            sub.callback.apply(null, value);
         });
     }
     getValidSubscribers(key, id = false, isType = true) {

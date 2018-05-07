@@ -108,6 +108,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            formatShorthand(def);
 	    }
 	    var definition = _utils2.default.clone(def);
+	    var defInstance = void 0;
 	    if (defs[meta.id]) {
 	        this.root.logs.print({
 	            title: { content: 'Tried To Create A Definition With Existing Id' },
@@ -140,12 +141,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return _utils2.default.clone(defs[dec].definition);
 	            });
 	        }
-	        defs[meta.id] = new cls(meta, definition, this.root);
+	        defInstance = defs[meta.id] = new cls(meta, definition, this.root);
 	    }
-	    return {
+	    var instance = {
 	        id: meta.id,
-	        proto: defs[meta.id].definition
+	        proto: defInstance.definition
 	    };
+	    if (type !== 'component') {
+	        if (def.endpoints) {
+	            for (var key in def.endpoints) {
+	                if (key !== 'id' && key !== 'proto' && typeof def.endpoints[key] === 'function') {
+	                    instance[key] = def.endpoints[key].bind(defInstance.scoped);
+	                }
+	            }
+	        }
+	    }
+	    return instance;
 	}
 	
 	var SepConClass = function () {
@@ -1160,7 +1171,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _classCallCheck(this, Component);
 	
 	        this.root = root;
-	        this.active = false;
+	        this.isActive = false;
 	
 	        this._eventsCallbacks = {};
 	        this.scoped = _utils2.default.clone(componentDefinition.view || {});
@@ -1201,16 +1212,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            this.scoped.events.forEach(function (evObj) {
 	                //getting the target - selector or the whole element
-	                var _target = evObj.selector ? _this2.scoped.element.querySelectorAll(evObj.selector) : _this2.scoped.element;
-	                if (!_this2.validateEvents(_target, evObj, true)) {
-	                    return;
-	                }
+	                var _target = evObj.selector ? [].slice.call(_this2.scoped.element.querySelectorAll(evObj.selector)) : [_this2.scoped.element];
 	                //storing callbacks in a map to keep reference for later unbinding on demand
-	                _this2._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback] = _this2.scoped[evObj.callback].bind(_this2.scoped);
+	                _this2._eventsCallbacks[(evObj.selector || '') + ':' + evObj.event + ':' + evObj.callback] = _this2.scoped[evObj.callback].bind(_this2.scoped);
 	                for (var i in _target) {
 	                    var trg = _target[i];
-	                    if ((typeof trg === 'undefined' ? 'undefined' : _typeof(trg)) === 'object' && trg !== null) {
-	                        trg.addEventListener(evObj.event, _this2._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
+	                    if (!_this2.validateEvents(trg, evObj, true)) {
+	                        if ((typeof trg === 'undefined' ? 'undefined' : _typeof(trg)) === 'object' && trg !== null) {
+	                            trg.addEventListener(evObj.event, _this2._eventsCallbacks[(evObj.selector || '') + ':' + evObj.event + ':' + evObj.callback], false);
+	                        }
 	                    }
 	                }
 	            });
@@ -1225,19 +1235,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	            this.scoped.events.forEach(function (evObj) {
 	                //getting the target - selector or the whole element
-	                var _target = evObj.selector ? _this3.scoped.element.querySelector(evObj.selector) : _this3.scoped.element;
-	                if (!_this3.validateEvents(_target, evObj)) {
-	                    return;
+	                var _target = evObj.selector ? [].slice.call(_this3.scoped.element.querySelectorAll(evObj.selector)) : [_this3.scoped.element];
+	                for (var i in _target) {
+	                    var trg = _target[i];
+	                    if (_this3.validateEvents(trg, evObj)) {
+	                        trg.removeEventListener(evObj.event, _this3._eventsCallbacks[(evObj.selector || '') + ':' + evObj.event + ':' + evObj.callback], false);
+	                    }
 	                }
 	                //using the eventsCallback map for live reference for removing it on demand
-	                _target.removeEventListener(evObj.event, _this3._eventsCallbacks[evObj.selector + ':' + evObj.event + ':' + evObj.callback], false);
 	            });
 	            this.scoped.isInitiatedEvents = false;
 	        }
 	    }, {
 	        key: 'validateEvents',
 	        value: function validateEvents(el, ev, bind) {
-	            if (!el) {
+	            if (!el && (typeof el === 'undefined' ? 'undefined' : _typeof(el)) !== 'object' && !el instanceof Element) {
 	                this.root.logs.print({
 	                    title: { content: 'Could Not Find An Element For ' + (bind ? 'Binding' : 'Unbinding') + ' An Event ' + (bind ? 'To' : 'From') },
 	                    rows: [{ style: 'label', content: 'DOM element' }, { style: 'code', content: this.scoped.element }, { style: 'label', content: 'event object' }, { style: 'code', content: ev }]
@@ -1257,7 +1269,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: 'initialize',
 	        value: function initialize(element) {
 	            // execute state mount and sync with render sequence
-	            this.active = true;
+	            this.isActive = true;
 	            this.setStateData();
 	            this.sequencer.startSequence('mount');
 	        }
@@ -1269,9 +1281,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: function resume(element) {
 	            var _this4 = this;
 	
-	            this.active = true;
 	            this.unbindEvents();
 	            this.scoped.element = element;
+	            if (this.isDestroying) {
+	                this.holdResumeInQueue = true;
+	                return;
+	            }
+	            this.isActive = true;
 	            if (!this.currentHtml) {
 	                this.initialize();
 	                return;
@@ -1293,6 +1309,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this.sequencer.startSequence('resume').then(function () {
 	                    _this4.preventEmptyHtml();
 	                });
+	            }
+	        }
+	    }, {
+	        key: 'checkForResume',
+	        value: function checkForResume() {
+	            if (this.holdResumeInQueue) {
+	                this.resume(this.scoped.element);
+	                this.holdResumeInQueue = false;
 	            }
 	        }
 	    }, {
@@ -1323,10 +1347,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: function onReferenceChange(changed) {
 	            var _this6 = this;
 	
-	            var localChanged = this.state.getReferenceStatePropNames(changed);
-	            this.sequencer.startSequence('referenceChange', [localChanged]).then(function () {
-	                _this6.preventEmptyHtml();
-	            });
+	            if (this.isActive) {
+	                var localChanged = this.state.getReferenceStatePropNames(changed);
+	                this.sequencer.startSequence('referenceChange', [localChanged]).then(function () {
+	                    _this6.preventEmptyHtml();
+	                });
+	            }
 	        }
 	    }, {
 	        key: 'onGlobalStateChange',
@@ -1386,11 +1412,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'onDestroy',
 	        value: function onDestroy() {
-	            this.active = false;
+	            var _this9 = this;
+	
+	            this.isActive = false;
+	            this.isDestroying = true;
 	            this.state.removeRoutes();
 	            this.unbindEvents();
-	            this.componentPrevProps = _utils2.default.clone(this.scoped.props);
-	            this.sequencer.startSequence('destroy');
+	            this.sequencer.startSequence('destroy').then(function () {
+	                _this9.isDestroying = false;
+	                _this9.componentPrevProps = _utils2.default.clone(_this9.scoped.props);
+	                _this9.checkForResume();
+	            });
 	        }
 	    }]);
 	
@@ -1417,6 +1449,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _utilsMapping = __webpack_require__(7);
 	
 	var _utilsMapping2 = _interopRequireDefault(_utilsMapping);
+	
+	var _utils = __webpack_require__(1);
+	
+	var _utils2 = _interopRequireDefault(_utils);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -1491,11 +1527,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'checkChanged',
 	        value: function checkChanged(data, changed) {
+	            var _this = this;
+	
 	            this.changed = false;
 	            if (this.definition.changed) {
 	                this.changed = true;
 	            } else if (Object.keys(this.refGlobal).length > 0 || Object.keys(this.selfGlobal).length > 0) {
-	                var globalsToCheck = Object.assign({}, this.selfGlobal, this.refGlobal);
+	                var globalsToCheck = _utils2.default.clone(this.selfGlobal);
+	                Object.keys(this.refGlobal).forEach(function (data) {
+	                    if (!globalsToCheck[data]) {
+	                        globalsToCheck[data] = [];
+	                    }
+	                    globalsToCheck[data] = globalsToCheck[data].concat(_this.refGlobal[data]);
+	                });
 	                this.changed = _utilsMapping2.default.isGlobalChanged(globalsToCheck, data, changed);
 	            }
 	            return this.changed;
@@ -1726,6 +1770,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.buildGlobalMethods();
 	
 	        this.scoped.setProps = function (props, silent) {
+	            props = _utils2.default.clone(props);
 	            var originalProps = _utils2.default.clone(_this2.scoped.props.local);
 	            var changedProps = _utils4.default.setChanges(_this2.scoped.props.local, props, silent, true);
 	
@@ -2037,14 +2082,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	
 	            if (passedExternalReference.parent.reference.global.hasOwnProperty(stateKey)) {
-	                externalReferences.global[key] = passedExternalReference.parent.reference.global[stateKey];
+	                externalReferences.global[key] = _utils2.default.clone(passedExternalReference.parent.reference.global[stateKey]);
 	                if (path) {
 	                    externalReferences.global[key].key += '.' + path;
 	                }
 	            } else if (passedExternalReference.parent.reference.external.hasOwnProperty(stateKey)) {
-	                externalReferences.external[key] = passedExternalReference.parent.reference.external[item.value];
+	                externalReferences.external[key] = _utils2.default.clone(passedExternalReference.parent.reference.external[item.value]);
 	            } else if (passedExternalReference.parent.reference.local.hasOwnProperty(stateKey)) {
-	                externalReferences.local[key] = passedExternalReference.parent.reference.local[item.value];
+	                externalReferences.local[key] = _utils2.default.clone(passedExternalReference.parent.reference.local[item.value]);
 	                var bindToRelevantAncestor = function bindToRelevantAncestor(node, prop) {
 	                    if (!node) {
 	                        return null;
@@ -2244,9 +2289,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: 'refProps',
 	        value: function refProps(properties) {
 	            var formedProperties = {};
-	            for (var key in properties) {
-	                var prop = properties[key];
-	                formedProperties[key] = { reference: prop };
+	            if (properties.length && Object.keys(properties).length === properties.length && properties.forEach) {
+	                properties.forEach(function (prop) {
+	                    formedProperties[prop] = { reference: prop };
+	                });
+	            } else {
+	                for (var key in properties) {
+	                    var prop = properties[key];
+	                    formedProperties[key] = { reference: prop };
+	                }
 	            }
 	            Object.assign(this._props, formedProperties);
 	            return this;
@@ -2616,6 +2667,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.services = {};
 	
+	        this.scoped.services = {};
 	        this.scoped.router = this.root.router;
 	
 	        this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
@@ -2896,7 +2948,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                Promise.resolve().then(function () {
 	                    var lastMessageFromChannel = _this.channelsLastCache[key];
 	                    if (lastMessageFromChannel && channel.callback && typeof channel.callback === 'function') {
-	                        channel.callback(lastMessageFromChannel);
+	                        channel.callback.apply(null, lastMessageFromChannel);
 	                    }
 	                });
 	            };
@@ -2905,7 +2957,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.scoped.router = this.root.router;
 	
 	        if (meta.provider) {
-	            this.scoped.provider = this.root.providers[meta.provider].scoped;
+	            var provider = this.root.providers[meta.provider];
+	            this.scoped.provider = provider.scoped;
+	            this.scoped.provider[meta.id] = this.scoped;
 	        }
 	
 	        this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);
@@ -3002,11 +3056,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var value = this.getChannelCache(key, args); //need to slice resolve and reject arguments
 	            var subscribers = this.getValidSubscribers(key);
 	            if (value === undefined) {
-	                value = this.definition.channels[key].apply(this.scoped, args);
+	                value = [].concat(this.definition.channels[key].apply(this.scoped, args));
 	                this.setChannelCache(key, args, value);
 	            }
 	            subscribers.forEach(function (sub) {
-	                sub.callback(value);
+	                sub.callback.apply(null, value);
 	            });
 	        }
 	    }, {
@@ -3368,6 +3422,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (step.target === 'state') {
 	                if (hook === false) {
 	                    this.base.state.updateReferencedProps();
+	                    this.base.updateState();
 	                }
 	            } else {
 	                this.base.updateState();
@@ -3626,7 +3681,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this.componentsDefinition[definition].checkChanged(data, Object.keys(changed));
 	            }
 	            this.componentElements.forEach(function (item) {
-	                if (item.element.component.active) {
+	                if (item.element.component.isActive) {
 	                    if (item.checkChanged(data, Object.keys(changed))) {
 	                        item.element.component.onGlobalStateChange(data, changed);
 	                    }

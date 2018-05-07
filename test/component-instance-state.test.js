@@ -411,4 +411,309 @@ describe('Component Unit', () => {
         DIV.innerHTML = parent.createTag().render();
         document.getElementById('ui-tests').appendChild(DIV);
     });
+
+    it('should keep consistency with refProps with nested props references, derived of a parent\s refProp', (done) => {
+        scope.createData({id: 'data'+testNum}, {
+            myObject: {
+                myProp: 'global'
+            }
+        });
+        scope.createModifier({id:'modifier'+testNum}, {
+            methods: {
+                changeGlobalProp() {
+                    this.setProps('data'+testNum, {
+                        myObject: {
+                            myProp: 'global-changed'
+                        }
+                    });
+                }
+            }
+        });
+        const comp3 = scope.createComponent({id: 'comp3'+testNum}, {
+            state: {
+                methods: {
+                    global: {
+                        changeGlobalProp: {
+                            modifier: 'modifier'+testNum,
+                            key: 'changeGlobalProp'
+                        }
+                    }
+                },
+                lifecycle: {
+                    attach() {
+                        expect(this.getProps().localProp).to.be.equal('local');
+                        expect(this.getProps().globalProp).to.be.equal('global');
+                        this.getMethods().changeGlobalProp();
+                    },
+                    change(changed) {
+                        expect(changed.globalProp.newValue).to.be.equal('global-changed');
+                        done();
+                    }
+                }
+            }
+        });
+        const comp2 = scope.createComponent({id: 'comp2'+testNum}, {
+            view: {
+                lifecycle: {
+                    render() {
+                        return comp3.createTag()
+                            .refProps(['localProp'])
+                            .refProps({
+                                globalProp: 'globalProp.myProp'
+                            }).render();
+                    }
+                }
+            }
+        });
+        const comp1 = scope.createComponent({id: 'comp1'+testNum}, {
+            state: {
+                props: {
+                    local: {
+                        localProp: 'local'
+                    },
+                    global: {
+                        globalProp: {
+                            data: 'data' + testNum,
+                            key: 'myObject'
+                        }
+                    }
+                }
+            },
+            view: {
+                lifecycle: {
+                    render() {
+                        return comp2.createTag()
+                            .refProps(['localProp', 'globalProp']).render();
+                    }
+                }
+            }
+        });
+        let DIV = document.createElement('div');
+        DIV.innerHTML = comp1.createTag().render();
+        document.getElementById('ui-tests').appendChild(DIV);
+    });
+
+    it('should keep consistency with refProps also when preventing change lifecycle', (done) => {
+        const changesMax = 2;
+        let changesCount = 0;
+        scope.createData({id: 'data'+testNum}, {
+            myObject: {
+                myProp: 'global'
+            }
+        });
+        scope.createModifier({id:'modifier'+testNum}, {
+            methods: {
+                changeGlobalProp() {
+                    changesCount++;
+                    this.setProps('data'+testNum, {
+                        myObject: {
+                            myProp: 'global-changed'+changesCount
+                        }
+                    });
+                }
+            }
+        });
+        const comp3 = scope.createComponent({id: 'comp3'+testNum}, {
+            state: {
+                methods: {
+                    global: {
+                        changeGlobalProp: {
+                            modifier: 'modifier'+testNum,
+                            key: 'changeGlobalProp'
+                        }
+                    }
+                },
+                lifecycle: {
+                    attach() {
+                        expect(this.getProps().localProp).to.be.equal('local');
+                        expect(this.getProps().globalProp).to.be.equal('global');
+                        this.getMethods().changeGlobalProp();
+                    },
+                    change(changed) {
+                        expect(changed.globalProp.newValue).to.be.equal('global-changed'+changesCount);
+                        if(changesCount < changesMax) {
+                            this.getMethods().changeGlobalProp();
+                        }
+                        else {
+                            done();
+                        }
+                    }
+                }
+            }
+        });
+        const comp2 = scope.createComponent({id: 'comp2'+testNum}, {
+            state: {
+                lifecycle: {
+                    change() {
+                        return false;
+                    }
+                }
+            },
+            view: {
+                lifecycle: {
+                    render() {
+                        return comp3.createTag()
+                            .refProps(['localProp'])
+                            .refProps({
+                                globalProp: 'globalProp.myProp'
+                            }).render();
+                    }
+                }
+            }
+        });
+        const comp1 = scope.createComponent({id: 'comp1'+testNum}, {
+            state: {
+                props: {
+                    local: {
+                        localProp: 'local'
+                    },
+                    global: {
+                        globalProp: {
+                            data: 'data' + testNum,
+                            key: 'myObject'
+                        }
+                    }
+                },
+                lifecycle: {
+                    change() {
+                        return false;
+                    }
+                }
+            },
+            view: {
+                lifecycle: {
+                    render() {
+                        return comp2.createTag()
+                            .refProps(['localProp', 'globalProp']).render();
+                    }
+                }
+            }
+        });
+        let DIV = document.createElement('div');
+        DIV.innerHTML = comp1.createTag().render();
+        document.getElementById('ui-tests').appendChild(DIV);
+    });
+
+
+    it('should keep consistency with refProps for arrays as well', (done) => {
+        const children = 3;
+        let childrenDoneCount = 0;
+        const changesMax = 2;
+        let changesCount = 0;
+        scope.createData({id: 'data'+testNum}, {
+            myObject: {
+                myProp: [{
+                        name: 'prop1'
+                    },
+                    {
+                        name: 'prop2'
+                    },
+                    {
+                        name: 'prop3'
+                    }]
+            }
+        });
+        scope.createModifier({id:'modifier'+testNum}, {
+            methods: {
+                changeGlobalProp() {
+                    changesCount++;
+                    let myObject = this.getProps('data'+testNum).myObject;
+                    myObject.myProp = myObject.myProp.map(obj => {
+                        obj.name = obj.name.substr(0, 5) + changesCount;
+                        return obj;
+                    });
+                    this.setProps('data'+testNum, {myObject});
+                }
+            }
+        });
+        const comp3 = scope.createComponent({id: 'comp3'+testNum}, {
+            state: {
+                methods: {
+                    global: {
+                        changeGlobalProp: {
+                            modifier: 'modifier'+testNum,
+                            key: 'changeGlobalProp'
+                        }
+                    }
+                },
+                lifecycle: {
+                    attach() {
+                        expect(this.getProps().localProp).to.be.equal('local');
+                        expect(this.getProps().originalProp.name).to.be.a('string');
+                        expect(this.getProps().globalProp.name).to.be.equal(this.getProps().originalProp.name);
+                        this.getMethods().changeGlobalProp();
+                    },
+                    change(changed) {
+                        expect(changed.globalProp.newValue.name).to.be.equal(this.getProps().originalProp.name+changesCount);
+                        if(changesCount < changesMax) {
+                            this.getMethods().changeGlobalProp();
+                        }
+                        else {
+                            childrenDoneCount++;
+                            if(childrenDoneCount === children) {
+                                done();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        const comp2 = scope.createComponent({id: 'comp2'+testNum}, {
+            state: {
+                lifecycle: {
+                    change() {
+                        return false;
+                    }
+                }
+            },
+            view: {
+                lifecycle: {
+                    render() {
+                        return this.props.globalProp.myProp.map((item, idx) => {
+                            return comp3.createTag()
+                                .props({
+                                    originalProp: item
+                                })
+                                .refProps(['localProp'])
+                                .refProps({
+                                    globalProp: 'globalProp.myProp.'+idx
+                                }).render();
+                        }).join('');
+                    }
+                }
+            }
+        });
+        const comp1 = scope.createComponent({id: 'comp1'+testNum}, {
+            state: {
+                props: {
+                    local: {
+                        localProp: 'local'
+                    },
+                    global: {
+                        globalProp: {
+                            data: 'data' + testNum,
+                            key: 'myObject'
+                        }
+                    }
+                },
+                lifecycle: {
+                    change() {
+                        return false;
+                    }
+                }
+            },
+            view: {
+                lifecycle: {
+                    render() {
+                        return comp2.createTag()
+                            .refProps(['localProp', 'globalProp']).render();
+                    }
+                }
+            }
+        });
+        let DIV = document.createElement('div');
+        DIV.innerHTML = comp1.createTag().render();
+        document.getElementById('ui-tests').appendChild(DIV);
+    });
+
 });

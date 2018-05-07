@@ -31,6 +31,7 @@ function create(meta, def, type, defs, cls) {
             formatShorthand(def);
     }
     let definition = common.clone(def);
+    let defInstance;
     if(defs[meta.id]) {
         this.root.logs.print({
             title: { content: `Tried To Create A Definition With Existing Id`},
@@ -82,12 +83,22 @@ function create(meta, def, type, defs, cls) {
             });
             meta.decorators = meta.decorators.map(dec => common.clone(defs[dec].definition));
         }
-        defs[meta.id] = new cls(meta, definition, this.root);
+        defInstance = defs[meta.id] = new cls(meta, definition, this.root);
     }
-    return {
+    let instance = {
         id: meta.id,
-        proto: defs[meta.id].definition
+        proto: defInstance.definition
     };
+    if(type !== 'component') {
+        if(def.endpoints) {
+            for(let key in def.endpoints) {
+                if(key !== 'id' && key !== 'proto' && typeof def.endpoints[key] === 'function') {
+                    instance[key] = def.endpoints[key].bind(defInstance.scoped)
+                }
+            }
+        }
+    }
+    return instance;
 }
 
 class SepConClass {

@@ -105,7 +105,7 @@ export default class Root {
             this.componentsDefinition[definition].checkChanged(data, Object.keys(changed));
         }
         this.componentElements.forEach((item) => {
-            if (item.element.component.active) {
+            if (item.element.component.isActive) {
                 if (item.checkChanged(data, Object.keys(changed))) {
                     item.element.component.onGlobalStateChange(data, changed);
                 }
