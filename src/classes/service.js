@@ -90,7 +90,9 @@ export default class Service {
         this.scoped.router = this.root.router;
 
         if (meta.provider) {
-            this.scoped.provider = this.root.providers[meta.provider].scoped;
+            const provider = this.root.providers[meta.provider];
+            this.scoped.provider = provider.scoped;
+            this.scoped.provider[meta.id] = this.scoped;
         }
 
         this.sequencer = new root.classes.Sequencer(this, root.sequencerConfig);

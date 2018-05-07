@@ -160,6 +160,7 @@ export default class ComponentState {
         this.buildGlobalMethods();
 
         this.scoped.setProps = (props, silent) => {
+            props = common.clone(props);
             const originalProps = common.clone(this.scoped.props.local);
             const changedProps = changes.setChanges(this.scoped.props.local, props, silent, true);
 
