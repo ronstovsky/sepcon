@@ -222,7 +222,7 @@ export default class ComponentState {
      */
     getProps() {
         const props = common.clone(this.scoped.props);
-        let flatProps = Object.assign({}, props.local, props.external, props.global);
+        let flatProps = Object.assign({}, props.external, props.global, props.local);
         return flatProps;
     }
 

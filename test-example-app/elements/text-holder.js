@@ -5,7 +5,7 @@ export default SepCon.createComponent({
 }, {
     state: {
         props: {
-            local: {value: 'Not set'}
+            external: {value: 'Not set'}
         }
     },
     view: {

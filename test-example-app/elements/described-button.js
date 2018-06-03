@@ -5,7 +5,7 @@ export default SepCon.createComponent({
 }, {
     state: {
         props: {
-            local: {label: 'Button', description: 'Button\'s Description', isActive: false}
+            external: {label: 'Button', description: 'Button\'s Description', isActive: false}
         },
         methods: {
             local: {

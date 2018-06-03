@@ -7,7 +7,7 @@ const numberPresentor = SepCon.createComponent({
 }, {
     state: {
         props: {
-            local: {
+            external: {
                 index: null,
                 number: null,
             },

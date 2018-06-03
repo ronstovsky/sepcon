@@ -39,12 +39,6 @@ export default SepCon.createComponent({
 }, {
     state: {
         props: {
-            local: {
-                currentPage: {
-                    title: 'MIAU',
-                    description: 'MIAU MIAU'
-                }
-            },
             global: {
                 currentPage: {
                     data: 'site',

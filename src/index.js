@@ -93,7 +93,7 @@ function create(meta, def, type, defs, cls) {
         if(def.endpoints) {
             for(let key in def.endpoints) {
                 if(key !== 'id' && key !== 'proto' && typeof def.endpoints[key] === 'function') {
-                    instance[key] = def.endpoints[key].bind(defInstance.scoped)
+                    instance[key] = def.endpoints[key].bind(defInstance.scoped);
                 }
             }
         }

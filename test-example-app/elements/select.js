@@ -5,7 +5,7 @@ export default SepCon.createComponent({
 }, {
     state: {
         props: {
-            local: {name: 'select', options: [{value: null, label: 'Loading'}]}
+            external: {name: 'select', options: [{value: null, label: 'Loading'}]}
         },
         methods: {
             local: {

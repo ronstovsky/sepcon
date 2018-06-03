@@ -10,7 +10,7 @@ export default SepCon.createComponent({
         },
         methods: {
             local: {
-                increase() {
+                increase(next) {
                     this.setProps({count: this.props.local.count + 1});
                 },
             }

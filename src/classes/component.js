@@ -45,10 +45,11 @@ export default class Component {
             //getting the target - selector or the whole element
             const _target = evObj.selector ? [].slice.call(this.scoped.element.querySelectorAll(evObj.selector)) : [this.scoped.element];
             //storing callbacks in a map to keep reference for later unbinding on demand
+            if(!this.scoped[evObj.callback]) return;
             this._eventsCallbacks[(evObj.selector || '') + ':' + evObj.event + ':' + evObj.callback] = this.scoped[evObj.callback].bind(this.scoped);
             for(let i in _target) {
                 let trg = _target[i];
-                if(!this.validateEvents(trg, evObj, true)) {
+                if(this.validateEvents(trg, evObj, true)) {
                     if (typeof trg === 'object' && trg !== null) {
                         trg.addEventListener(evObj.event, this._eventsCallbacks[(evObj.selector || '') + ':' + evObj.event + ':' + evObj.callback], false);
                     }
@@ -74,7 +75,7 @@ export default class Component {
         this.scoped.isInitiatedEvents = false;
     }
     validateEvents(el, ev, bind) {
-        if(!el && typeof el !== 'object' && !el instanceof Element) {
+        if(!el && typeof el !== 'object' && !(el instanceof Element)) {
             this.root.logs.print({
                 title: { content: `Could Not Find An Element For ${bind ? 'Binding' : 'Unbinding'} An Event ${bind ? 'To' : 'From'}` },
                 rows: [
