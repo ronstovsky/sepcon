@@ -28,9 +28,16 @@ export default class ComponentTag {
     }
     refMethods(methods) {
         let formedMethods = {};
-        for(let key in methods) {
-            const method = methods[key];
-            formedMethods[key] = { reference: method };
+        if(methods.length && Object.keys(methods).length === methods.length && methods.forEach) {
+            methods.forEach(method => {
+                formedMethods[method] = {reference: method};
+            });
+        }
+        else {
+            for(let key in methods) {
+                const method = methods[key];
+                formedMethods[key] = { reference: method };
+            }
         }
         Object.assign(this._methods, formedMethods);
         return this;
