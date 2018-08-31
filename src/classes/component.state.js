@@ -319,7 +319,7 @@ export default class ComponentState {
             if(parentStateKey.indexOf('.') >= 0) {
                 path = parentStateKey.split('.');
             }
-            const state = refProp.state;
+            const state = refProp.state.getProps();
             if(path) {
                 let statePosition = state;
                 while(path.length) {
@@ -495,13 +495,13 @@ export default class ComponentState {
         else if (passedExternalReference.parent.scoped.props.external.hasOwnProperty(stateKey)) {
             externalReferences.external[key] = {
                 key: item.value,
-                state: passedExternalReference.parent.scoped.props.external
+                state: passedExternalReference.parent
             };
         }
         else if (passedExternalReference.parent.scoped.props.local.hasOwnProperty(stateKey)) {
             externalReferences.local[key] = {
                 key: item.value,
-                state: passedExternalReference.parent.scoped.props.local
+                state: passedExternalReference.parent
             };
             if(path) {
                 parentState.bind(stateKey + '.' + path, this);
