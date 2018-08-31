@@ -82,18 +82,18 @@ const chainMethods = (methods, seg, name) => {
             if(methods.global[name]) {
                 callStack.push(methods.global[name]);
             }
-            /* falls through */
+        /* falls through */
         case 'external':
             if(methods.external[name]) {
                 callStack.push(methods.external[name]);
             }
-            /* falls through */
+        /* falls through */
         case 'local':
             if(methods.local[name]) {
                 hasLocal = true;
                 callStack.push(methods.local[name]);
             }
-            /* falls through */
+        /* falls through */
     }
 
     let method = function () {
@@ -384,7 +384,16 @@ export default class ComponentState {
             const parentState = parentComponent ? parentComponent.state : null;
 
             if(this.component.mapItem.external.props) {
-                this.setExternalProperties(this.component.mapItem.external.props, parentState);
+                //getting only defaults that were not passed externally
+                let defaults = Object.keys(this.definition.props.external).reduce((acc, current) => {
+                    if(!this.component.mapItem.external.props.hasOwnProperty(current)) {
+                        acc[current] = this.definition.props.external[current];
+                    }
+                    return acc;
+                }, {});
+                let props = this.component.mapItem.external.props;
+                this.setExternalProperties(props, parentState);
+                Object.assign(this.scoped.props.external, defaults);
             }
             if(this.component.mapItem.external.methods) {
                 this.setExternalMethods(this.component.mapItem.external.methods, parentComponent, parentState);
@@ -410,13 +419,13 @@ export default class ComponentState {
             if (valueObject.reference) {
                 this.setExternalReferencedProperty({
                     name: prop,
-                    value: props[prop].reference
+                    value: valueObject.reference
                 }, externalReferences, parentState);
             }
             else {
                 this.setExternalProperty({
                     name: prop,
-                    value: props[prop].value
+                    value: valueObject.value
                 }, externalsProperties);
             }
         }
