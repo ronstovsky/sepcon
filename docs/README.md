@@ -160,7 +160,8 @@ The local properties and methods of a [component state] are declared and handled
     }
   }
   ```
-  * *We've created a new local property named `counter`.*
+  * *We've created a new local property named `counter`.*  
+  The local properties will override any property under the same name in both external and global segments.
 
 * **Methods**
   Local methods will run in the [component state]'s scope.
@@ -186,7 +187,7 @@ The local properties and methods of a [component state] are declared and handled
 The external properties cannot be altered, they are read-only and are set at (or passed from) the parent Component.
 
 * **Properties**
-  In the [component view] scope - external properties will override local properties under the same key.
+  In the [component view] scope - external properties will get override by local properties under the same key.
 * **Methods**
   Local method under the same key as an external method will be in charge of executing it, by using the `next` argument.
 
