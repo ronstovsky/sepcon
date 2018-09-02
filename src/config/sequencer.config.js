@@ -9,7 +9,7 @@ export default {
             else {
                 this.base.updateState();
             }
-            return [true];
+            return [false];
         },
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
@@ -36,7 +36,7 @@ export default {
             if (step.target === 'component') {
                 this.base.updateState();
             }
-            return [true];
+            return [false];
         },
         retrieve: function (step, hook, res) {
             if (step.target === 'component') {
