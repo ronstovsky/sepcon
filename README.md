@@ -12,7 +12,7 @@ SepCon is available for installation using NPM
 ```
 npm install sepcon
 ```
-Or simply download [sepcon.js](https://github.com/sepcon-rnd/sepcon/blob/master/dist/sepcon.js) (and/or [sepcon.js.gz](https://github.com/sepcon-rnd/sepcon/blob/master/dist/sepcon.js.gz)) to your project directory
+Or simply download [sepcon.js](https://github.com/ronstovsky/sepcon/blob/master/dist/sepcon.js) (and/or [sepcon.js.gz](https://github.com/ronstovsky/sepcon/blob/master/dist/sepcon.js.gz)) to your project directory
 
 ## The Ingredients
 
@@ -59,4 +59,4 @@ In addition - the "view" itself won't be able to alter the State's properties, i
 
 While the Component-State has both properties *and* the privilege to change them, data objects are just plain static objects, that are accessible to all Component-States. In order to alter them, the Component-State should call methods located in the modifiers. Again - access to them are available to all Component-States, and they are basically some sort of an API to enable manipulation of the global Data objects.
 
-For a full documentation go to [the Github Project Page](https://sepcon-rnd.github.io/sepcon/)
+For a full documentation go to [the Github Project Page](https://ronstovsky.github.io/sepcon/)
